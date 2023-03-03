@@ -42,5 +42,10 @@ Or separatly:
 
     $ make test3
 
+### PAPI
+
+Remember to execute the following command before running the first time:
+
+    $ sudo sh -c 'echo -1 >/proc/sys/kernel/perf_event_paranoid'
 
 
