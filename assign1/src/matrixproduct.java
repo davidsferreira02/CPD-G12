@@ -110,13 +110,22 @@ class MatrixProduct {
 
     }
     public static void main(String[] args) {
+
+        
        
         char c;
         int lin, col, blockSize;
         int op;
         Scanner input = new Scanner(System.in);
-        
-        
+        Boolean test = false;
+
+        if(args.length > 0) 
+		if (args[0].equals("-t") || args[0].equals("-tests") )
+			test = true;
+		else {
+			System.out.println("Usage: ./matrixproduct [-t|-tests]\n");
+			return;
+		}
 
         op=1;
 	do {

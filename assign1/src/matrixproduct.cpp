@@ -10,6 +10,7 @@ using namespace std;
 
 #define SYSTEMTIME clock_t
 
+bool test = false;
  
 void OnMult(int m_ar, int m_br) 
 {
@@ -55,16 +56,24 @@ void OnMult(int m_ar, int m_br)
 
 
     Time2 = clock();
-	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-	cout << st;
+	if(!test){
+		sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+		cout << st;
+	}else {
+		sprintf(st, "%3.3f,", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+		cout << st;
+	}
 
 	// display 10 elements of the result matrix tto verify correctness
-	cout << "Result matrix: " << endl;
-	for(i=0; i<1; i++)
-	{	for(j=0; j<min(10,m_br); j++)
-			cout << phc[j] << " ";
+	if(!test){
+		cout << "Result matrix: " << endl;
+		for(i=0; i<1; i++)
+		{	for(j=0; j<min(10,m_br); j++)
+				cout << phc[j] << " ";
+		}
+		cout << endl;
 	}
-	cout << endl;
+	
 
     free(pha);
     free(phb);
@@ -115,16 +124,24 @@ void OnMultLine(int m_ar, int m_br)
 
 
     Time2 = clock();
-	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-	cout << st;
+	if(!test){
+		sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+		cout << st;
+	}else {
+		sprintf(st, "%3.3f,", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+	}
+		
 
 	// display 10 elements of the result matrix tto verify correctness
-	cout << "Result matrix: " << endl;
-	for(i=0; i<1; i++)
-	{	for(j=0; j<min(10,m_br); j++)
-			cout << phc[j] << " ";
+	if(!test){
+		cout << "Result matrix: " << endl;
+		for(i=0; i<1; i++)
+		{	for(j=0; j<min(10,m_br); j++)
+				cout << phc[j] << " ";
+		}
+		cout << endl;
 	}
-	cout << endl;
+	
 
     free(pha);
     free(phb);
@@ -171,11 +188,14 @@ int main (int argc, char *argv[])
 	int EventSet = PAPI_NULL;
   	long long values[2];
   	int ret;
-	bool test = false;
+	//bool test = false;
 
 	if(argc > 1) 
-		if (strcmp(argv[1], "-test") == 0 || strcmp(argv[1], "-t") == 0)
+		if (strcmp(argv[1], "-test") == 0 || strcmp(argv[1], "-t") == 0){
 			test = true;
+			cout << "Matrix,Time,L1DCM,L2DCM\n";
+		}
+			
 		else {
 			cout << "Usage: ./matrixproduct [-t|-tests]\n";
 			return -1;
@@ -211,12 +231,13 @@ int main (int argc, char *argv[])
 		cin >>op;
 		if (op == 0)
 			break;
-		printf("Dimensions: lins=cols ? ");
+		if(!test)
+			printf("Dimensions: lins=cols ? ");
    		cin >> lin;
    		col = lin;
 
 		if(test)
-			cout << lin;
+			cout << lin << ',';
 
 
 		// Start counting
@@ -231,7 +252,8 @@ int main (int argc, char *argv[])
 				OnMultLine(lin, col);  
 				break;
 			case 3:
-				cout << "Block Size? ";
+				if(!test)
+					cout << "Block Size? ";
 				cin >> blockSize;
 				if(test)
 					cout << blockSize;
@@ -242,8 +264,14 @@ int main (int argc, char *argv[])
 
   		ret = PAPI_stop(EventSet, values);
   		if (ret != PAPI_OK) cout << "ERROR: Stop PAPI" << endl;
-  		printf("L1 DCM: %lld \n",values[0]);
-  		printf("L2 DCM: %lld \n",values[1]);
+		if(!test){
+			printf("L1 DCM: %lld \n",values[0]);
+  			printf("L2 DCM: %lld \n",values[1]);
+		}else{
+			printf("%lld,",values[0]);
+  			printf("%lld\n",values[1]);
+		}
+  		
 
 		ret = PAPI_reset( EventSet );
 		if ( ret != PAPI_OK )
