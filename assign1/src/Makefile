@@ -20,7 +20,7 @@ test1:
 	
 test2:
 	rm -r -f ./tests/results/test2*.csv
-	touch ./tests/results/test2-c.csv touch ./tests/results/test2-2-c.csv ./tests/results/test2-java.csv
+	touch ./tests/results/test2-c.csv ./tests/results/test2-2-c.csv ./tests/results/test2-java.csv
 	./matrixproduct -t < ./tests/input/test2.txt > ./tests/results/test2-c.csv
 	java MatrixProduct -t < ./tests/input/test2.txt > ./tests/results/test2-java.csv
 	./matrixproduct -t < ./tests/input/test2-2.txt > ./tests/results/test2-2-c.csv

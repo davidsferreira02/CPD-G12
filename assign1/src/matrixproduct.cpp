@@ -129,6 +129,7 @@ void OnMultLine(int m_ar, int m_br)
 		cout << st;
 	}else {
 		sprintf(st, "%3.3f,", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+		cout << st;
 	}
 		
 
