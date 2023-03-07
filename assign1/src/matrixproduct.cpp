@@ -162,6 +162,10 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 		return; 
 	}
 
+	SYSTEMTIME Time1, Time2;
+	
+	char st[100];
+
 	//Allocates Arrays
     double *pha, *phb, *phc;
 	int elemstotal = m_ar*m_br; 
@@ -181,7 +185,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 		for(int j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
 
-	//Time1 = clock();
+	Time1 = clock();
 
 	//Block Multiplication Implementation
 
@@ -204,13 +208,25 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 	}
 
 
-	// display 10 elements of the result matrix tto verify correctness
-	cout << "Result matrix: " << endl;
-	for(i=0; i<1; i++)
-	{	for(j=0; j<min(10,m_br); j++)
-			cout << phc[j] << " ";
+	Time2 = clock();
+	if(!test){
+		sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+		cout << st;
+	}else {
+		sprintf(st, "%3.3f,", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+		cout << st;
 	}
-	cout << endl;
+		
+
+	// display 10 elements of the result matrix tto verify correctness
+	if(!test){
+		cout << "Result matrix: " << endl;
+		for(i=0; i<1; i++)
+		{	for(j=0; j<min(10,m_br); j++)
+				cout << phc[j] << " ";
+		}
+		cout << endl;
+	}
 
     free(pha);
     free(phb);
