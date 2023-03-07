@@ -153,7 +153,6 @@ void OnMultLine(int m_ar, int m_br)
 // add code here for block x block matriz multiplication
 void OnMultBlock(int m_ar, int m_br, int bkSize)
 {
-
 	if(bkSize > m_ar){
 		perror("The given Block Size is greater than the array capacity"); 
 		return; 
@@ -165,6 +164,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
 	//Allocates Arrays
     double *pha, *phb, *phc;
+	int elemstotal = m_ar*m_br; 
 
     pha = (double *)malloc(elemstotal * sizeof(double));
 	phb = (double *)malloc(elemstotal * sizeof(double));
@@ -181,7 +181,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 		for(int j=0; j<m_br; j++)
 			phb[i*m_br + j] = (double)(i+1);
 
-	Time1 = clock();
+	//Time1 = clock();
 
 	//Block Multiplication Implementation
 
@@ -194,7 +194,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 				//Block Multiplication using exercise 2 aproach 
 				for(x = i; x<i+bkSize; x++){
 					for(y = j; y<j+bkSize; y++){
-						for(z = k; z<k+bkSize; k++){
+						for(z = k; z<k+bkSize; z++){
 							phc[x*m_ar+z] += pha[i*m_ar+y] * phb[y*m_ar+z];
 						}
 					}
@@ -203,10 +203,6 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 		}
 	}
 
-
-	Time2 = clock();
-	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-	cout << st;
 
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
