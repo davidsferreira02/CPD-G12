@@ -269,7 +269,7 @@ int main (int argc, char *argv[])
 	if(argc > 1) 
 		if (strcmp(argv[1], "-test") == 0 || strcmp(argv[1], "-t") == 0){
 			test = true;
-			cout << "Matrix,Time,L1DCM,L2DCM\n";
+			cout << "Matrix,BlockSize,Time,L1DCM,L2DCM\n";
 		}
 			
 		else {
@@ -322,9 +322,11 @@ int main (int argc, char *argv[])
 
 		switch (op){
 			case 1: 
+				if(test) cout << "0,";
 				OnMult(lin, col);
 				break;
 			case 2:
+				if(test) cout << "0,";
 				OnMultLine(lin, col);  
 				break;
 			case 3:
@@ -332,7 +334,7 @@ int main (int argc, char *argv[])
 					cout << "Block Size? ";
 				cin >> blockSize;
 				if(test)
-					cout << blockSize;
+					cout << blockSize << ',';
 				OnMultBlock(lin, col, blockSize);  
 				break;
 

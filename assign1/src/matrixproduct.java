@@ -119,8 +119,10 @@ class MatrixProduct {
         Scanner input = new Scanner(System.in);
 
         if (args.length > 0)
-            if (args[0].equals("-t") || args[0].equals("-tests"))
+            if (args[0].equals("-t") || args[0].equals("-tests")){
                 test = true;
+                System.out.println("Matrix,Time");
+            }
             else {
                 System.out.println("Usage: ./matrixproduct [-t|-tests]\n");
                 return;
