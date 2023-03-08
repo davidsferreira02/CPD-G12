@@ -1,3 +1,5 @@
 matrixproduct
 MatrixProduct.class
 *.csv
+*.zip
+settings.json

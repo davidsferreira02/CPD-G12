@@ -262,14 +262,14 @@ int main (int argc, char *argv[])
 	int op;
 	
 	int EventSet = PAPI_NULL;
-  	long long values[2];
+  	long long values[7];
   	int ret;
 	//bool test = false;
 
 	if(argc > 1) 
 		if (strcmp(argv[1], "-test") == 0 || strcmp(argv[1], "-t") == 0){
 			test = true;
-			cout << "Matrix,BlockSize,Time,L1DCM,L2DCM\n";
+			cout << "Matrix,BlockSize,Time,L1DCM,L2DCM,L1ICM,L2ICM,L1TCM,L2TCM,TOTINS\n";
 		}
 			
 		else {
@@ -293,6 +293,22 @@ int main (int argc, char *argv[])
 
 	ret = PAPI_add_event(EventSet,PAPI_L2_DCM);
 	if (ret != PAPI_OK) cout << "ERROR: PAPI_L2_DCM" << endl;
+
+	//custom
+	ret = PAPI_add_event(EventSet,PAPI_L1_ICM);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_L1_ICM" << endl;
+
+	ret = PAPI_add_event(EventSet,PAPI_L2_ICM);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_L2_ICM" << endl;
+
+	ret = PAPI_add_event(EventSet,PAPI_L1_TCM);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_L1_TCM" << endl;
+
+	ret = PAPI_add_event(EventSet,PAPI_L2_TCM);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_L2_TCM" << endl;
+
+	ret = PAPI_add_event(EventSet,PAPI_TOT_INS);
+	if (ret != PAPI_OK) cout << "ERROR: PAPI_L2_INS" << endl;
 
 
 	op=1;
@@ -326,7 +342,7 @@ int main (int argc, char *argv[])
 				OnMult(lin, col);
 				break;
 			case 2:
-				if(test) cout << "0,";
+			if(test) cout << "0,";
 				OnMultLine(lin, col);  
 				break;
 			case 3:
@@ -345,9 +361,19 @@ int main (int argc, char *argv[])
 		if(!test){
 			printf("L1 DCM: %lld \n",values[0]);
   			printf("L2 DCM: %lld \n",values[1]);
+			printf("L1 ICM: %lld \n",values[2]);
+			printf("L2 ICM: %lld \n",values[3]);
+			printf("L1 TCM: %lld \n",values[4]);
+			printf("L2 TCM: %lld \n",values[5]);
+			printf("TOT INS: %lld \n",values[6]);
 		}else{
 			printf("%lld,",values[0]);
-  			printf("%lld\n",values[1]);
+			printf("%lld,",values[1]);
+			printf("%lld,",values[2]);
+			printf("%lld,",values[3]);
+			printf("%lld,",values[4]);
+			printf("%lld,",values[5]);
+  			printf("%lld\n",values[6]);
 		}
   		
 
@@ -365,10 +391,35 @@ int main (int argc, char *argv[])
 
 	ret = PAPI_remove_event( EventSet, PAPI_L2_DCM );
 	if ( ret != PAPI_OK )
-		std::cout << "FAIL remove event" << endl; 
+		std::cout << "FAIL remove event" << endl;
+
+	//custom
+	ret = PAPI_remove_event( EventSet, PAPI_L1_ICM );
+	if (ret != PAPI_OK)
+		std::cout << "FAIL remove event" << endl;
+
+	ret = PAPI_remove_event( EventSet, PAPI_L2_ICM );
+	if (ret != PAPI_OK)
+		std::cout << "FAIL remove event" << endl;
+
+	ret = PAPI_remove_event( EventSet, PAPI_L1_TCM );
+	if (ret != PAPI_OK)
+		std::cout << "FAIL remove event" << endl;
+
+	ret = PAPI_remove_event( EventSet, PAPI_L2_TCM );
+	if (ret != PAPI_OK)
+		std::cout << "FAIL remove event" << endl;
+
+	ret = PAPI_remove_event( EventSet, PAPI_TOT_INS );
+	if (ret != PAPI_OK)
+		std::cout << "FAIL remove event" << endl;
+
+	 
 
 	ret = PAPI_destroy_eventset( &EventSet );
 	if ( ret != PAPI_OK )
 		std::cout << "FAIL destroy" << endl;
+
+	
 
 }
