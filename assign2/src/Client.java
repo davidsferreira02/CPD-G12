@@ -1,37 +1,57 @@
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
-    protected Socket clientSocket = null;
 
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         try {
-            Socket clientSocket = new Socket("localhost", 9000);
+            // Connect to the server
+            Socket socket = new Socket("localhost", 8080);
+            System.out.println("Connected to server");
 
+            // Set up input and output streams
+            BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
 
-            String userInput = "";
-            while(!userInput.equals("END")) {
-                OutputStream output = clientSocket.getOutputStream();
-                InputStream input = clientSocket.getInputStream();
-                Scanner userInputScanner = new Scanner(System.in);
-                System.out.print("Input: ");
-                userInput = userInputScanner.nextLine();
+            // Start a loop to send and receive messages
+            // Start a loop to send and receive messages
+            Scanner scanner = new Scanner(System.in);
+            String message;
 
-                DataOutputStream data = new DataOutputStream(output);
-                data.writeUTF(userInput);
+            while (true) {
+                // Wait for user input
+                System.out.print("Enter a message to send to the server: ");
+                message = scanner.nextLine();
 
-                DataInputStream dataReceived = new DataInputStream(input);
-                System.out.println("Received: " + dataReceived.readUTF());
+           /*     if (message.equals("quit")) {
+                    // Send a message to the server to indicate that the connection should be closed
+                    output.println("quit");
+                    input.close();
+                    output.close();
+                    socket.close();
+
+                    break;
+                }*/
+
+                // Send the message to the server
+                output.println(message);
+
+                // Wait for a response from the server
+                String response = input.readLine();
+                System.out.println("Received: " + response);
             }
 
 
 
         } catch (IOException e) {
-            throw new IOException("Failed to connect to Server", e);
+            System.out.println("Error: " + e.getMessage());
         }
-
     }
 }
+
+
+

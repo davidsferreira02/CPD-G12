@@ -1,86 +1,64 @@
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-public class Server implements Runnable{
-    protected int serverPort = 2727;
-    protected ServerSocket serverSocket = null;
-    protected int currentSum = 0;
-    protected boolean isStopped = false;
 
-    public Server(int port){
-        this.serverPort = port;
+public class Server {
+
+    private static final int PORT = 8080;
+    private static final int NUM_PLAYERS = 4;
+
+    private ServerSocket serverSocket;
+    private List<MyThread> threads;
+    private List<Socket> userSockets;
+
+    public Server() throws IOException {
+        userSockets = new ArrayList<>();
+        threads = new ArrayList<>();
     }
 
+    public void start() {
+        try {
+            serverSocket = new ServerSocket(PORT);
+            System.out.println("Server started on port " + PORT);
+            Game game = new Game(NUM_PLAYERS, userSockets);
 
-    public void run() {
-        openServerSocket();
-        System.out.println("Server Running");
+            while (threads.size() < NUM_PLAYERS) {
+                Socket socket = serverSocket.accept();
+                MyThread thread = new MyThread(socket,game);
+                threads.add(thread);
+                userSockets.add(socket);
+                thread.start();
+                System.out.println("Player connected: " + socket.getInetAddress());
+            }
 
-        while(!isStopped) {
-            Socket clientSocket = null;
+            System.out.println("All playaers connected. Starting game...");
+
+            // Start the game
+
+            game.start();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
             try {
-                clientSocket = this.serverSocket.accept();
+                serverSocket.close();
             } catch (IOException e) {
-                if(isStopped) {
-                    System.out.println("Server Stopped");
-                    return;
-                }
-                throw new RuntimeException("Error accepting connections", e);
-            }
-            try {
-                processClientRequest(clientSocket);
-            } catch (Exception e) {
-
+                e.printStackTrace();
             }
         }
     }
 
-    private void openServerSocket() {
-        try {
-            this.serverSocket = new ServerSocket(this.serverPort);
-        } catch (IOException e) {
-            throw new RuntimeException("Cannot open port" + this.serverPort, e);
-        }
-    }
 
-    public void stop() {
-        this.isStopped = true;
-        try {
-            this.serverSocket.close();
-        } catch (IOException e) {
-            throw new RuntimeException("Error closing server", e);
-        }
-    }
 
-    private void processClientRequest(Socket clientSocket) throws Exception {
-        String received = "";
-        while(!received.equals("END")) {
-            InputStream input  = clientSocket.getInputStream();
-            OutputStream output = clientSocket.getOutputStream();
 
-            DataInputStream receivedData = new DataInputStream(input);
-            DataOutputStream sendData = new DataOutputStream(output);
-            received = receivedData.readUTF();
-            try {
-                int number = Integer.parseInt(received);
-                this.currentSum += number;
 
-                sendData.writeUTF(String.valueOf(this.currentSum));
-            } catch (NumberFormatException e) {
-                //
-                if(!received.equals("END")) {
-                    sendData = new DataOutputStream(output);
-                    sendData.writeUTF("Send integers or 'END'");
-                }
-                else {
-                    sendData.writeUTF(String.valueOf(this.currentSum));
-                }
-            }
-            System.out.println("Received: " + received);
-        }
-
-        stop();
+    public static void main(String[] args) throws IOException {
+        Server server = new Server();
+        server.start();
     }
 
 }
