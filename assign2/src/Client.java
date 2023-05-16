@@ -3,55 +3,54 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Client {
+    private static final String SERVER_ADDRESS = "localhost";
+    private static final int SERVER_PORT = 8888;
 
-    public static void main(String[] args) {
-        try {
-            // Connect to the server
-            Socket socket = new Socket("localhost", 8080);
-            System.out.println("Connected to server");
+    public static void main(String[] args) throws IOException {
+        Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-            // Set up input and output streams
-            BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+        String userInput;
 
-            // Start a loop to send and receive messages
-            // Start a loop to send and receive messages
-            Scanner scanner = new Scanner(System.in);
-            String message;
-
-            while (true) {
-                // Wait for user input
-                System.out.print("Enter a message to send to the server: ");
-                message = scanner.nextLine();
-
-           /*     if (message.equals("quit")) {
-                    // Send a message to the server to indicate that the connection should be closed
-                    output.println("quit");
-                    input.close();
-                    output.close();
-                    socket.close();
-
-                    break;
-                }*/
-
-                // Send the message to the server
-                output.println(message);
-
-                // Wait for a response from the server
-                String response = input.readLine();
-                System.out.println("Received: " + response);
+        // Read messages from the server in a separate thread
+        Thread readThread = new Thread(() -> {
+            try {
+                while (true) {
+                    String message = in.readLine();
+                    if (message == null) {
+                        break;
+                    }
+                    System.out.println(message);
+                }
+            } catch (IOException e) {
+                System.err.println("Error reading from server: " + e);
             }
+        });
+        readThread.start();
 
 
-
-        } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+        boolean quit=true;
+        // Send messages to the server
+        while (quit) {
+            System.out.print("Enter a message to send to the server (or 'quit' to exit): ");
+            userInput = stdIn.readLine();
+            out.println(userInput);
+            if ("quit".equals(userInput)) {
+                quit=false;
+            }
         }
+
+        // Close the socket
+        readThread.interrupt();
+        try {
+            readThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        socket.close();
     }
 }
-
-
-

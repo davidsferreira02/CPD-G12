@@ -2,63 +2,56 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
+    private static final int PORT = 8000;
+    private static final int MAX_PLAYERS = 4;
+    private static final int MAX_GAMES = 5;
 
-    private static final int PORT = 8080;
-    private static final int NUM_PLAYERS = 4;
+    private List<ClientHandler> clients;
+    private ExecutorService threadPool;
 
-    private ServerSocket serverSocket;
-    private List<MyThread> threads;
-    private List<Socket> userSockets;
-
-    public Server() throws IOException {
-        userSockets = new ArrayList<>();
-        threads = new ArrayList<>();
+    public Server() {
+        clients = new ArrayList<>();
+        threadPool = Executors.newFixedThreadPool(MAX_GAMES);
     }
 
     public void start() {
         try {
-            serverSocket = new ServerSocket(PORT);
+            ServerSocket serverSocket = new ServerSocket(PORT);
             System.out.println("Server started on port " + PORT);
-            Game game = new Game(NUM_PLAYERS, userSockets);
 
-            while (threads.size() < NUM_PLAYERS) {
-                Socket socket = serverSocket.accept();
-                MyThread thread = new MyThread(socket,game);
-                threads.add(thread);
-                userSockets.add(socket);
-                thread.start();
-                System.out.println("Player connected: " + socket.getInetAddress());
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client connected: " + clientSocket);
+
+                // Create a new client handler for the connected client
+                ClientHandler clientHandler = new ClientHandler(this, clientSocket);
+                clients.add(clientHandler);
+                threadPool.execute(clientHandler);
             }
-
-            System.out.println("All playaers connected. Starting game...");
-
-            // Start the game
-
-            game.start();
-
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                serverSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
+    public synchronized void removeClient(ClientHandler clientHandler) {
+        clients.remove(clientHandler);
+    }
 
+    public synchronized List<ClientHandler> getClients() {
+        return clients;
+    }
 
+    public int getMaxPlayers() {
+        return MAX_PLAYERS;
+    }
 
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Server server = new Server();
         server.start();
     }
-
 }
