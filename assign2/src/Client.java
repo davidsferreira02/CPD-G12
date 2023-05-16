@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -6,7 +7,7 @@ import java.net.Socket;
 
 public class Client {
     private static final String SERVER_ADDRESS = "localhost";
-    private static final int SERVER_PORT = 8888;
+    private static final int SERVER_PORT = 8000;
 
     public static void main(String[] args) throws IOException {
         Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
@@ -32,19 +33,19 @@ public class Client {
         });
         readThread.start();
 
-
-        boolean quit=true;
+        boolean quite = true;
         // Send messages to the server
-        while (quit) {
+        // Send messages to the server
+        while (quite) {
             System.out.print("Enter a message to send to the server (or 'quit' to exit): ");
             userInput = stdIn.readLine();
             out.println(userInput);
             if ("quit".equals(userInput)) {
-                quit=false;
+                quite = false;
             }
         }
 
-        // Close the socket
+// Close the socket
         readThread.interrupt();
         try {
             readThread.join();
@@ -53,4 +54,4 @@ public class Client {
         }
         socket.close();
     }
-}
+    }
