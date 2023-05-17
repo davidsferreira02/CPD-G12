@@ -39,6 +39,11 @@ public class Client {
             if(received.equals("LOGIN")){
                 client.login();
             }
+            else if(received.equals("INPUT")){
+                Scanner scanner = new Scanner(System.in);
+                String input = scanner.nextLine();
+                client.out.println(input);
+            }
             else{
                 System.out.println(received);
             }
@@ -75,4 +80,5 @@ public class Client {
         System.out.println(in.readLine());
         System.out.println();
     }
+
 }

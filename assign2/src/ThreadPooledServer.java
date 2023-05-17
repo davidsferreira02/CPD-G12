@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -31,7 +32,7 @@ public class ThreadPooledServer implements Runnable{
         synchronized(this){
             this.runningThread = Thread.currentThread();
         }
-        loadPlayers("assign2/src/players");
+        loadPlayers("src/players");
         /*for( Player player : players) {
             player.printPlayer();
         }*/

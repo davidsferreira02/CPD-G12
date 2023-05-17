@@ -46,10 +46,12 @@ public class ClientHandler implements Runnable{
                         System.out.println(player.getUsername() + ":" + player.getTimestampQueue());
                     }
                 }
+                else {
 
-                /*else {
-                    outputStream.println("GGWP");
-                }*/
+                    if(this.queue.size() == 1){
+                        startGame(this.queue, inputStream, outputStream);
+                    }
+                }
             }
 
 
@@ -143,7 +145,7 @@ public class ClientHandler implements Runnable{
     public synchronized void updateUserFile(Player player) {
         //username:password:rank:token:tokenLimit:timestampQueue
         try {
-            String filename = "assign2/src/players/" + player.getUsername() + ".txt";
+            String filename = "src/players/" + player.getUsername() + ".txt";
             File file = new File(filename);
 
             // Check if the file doesn't exist
@@ -153,7 +155,8 @@ public class ClientHandler implements Runnable{
 
             FileWriter writer = new FileWriter(filename);
             String separator = ":";
-            writer.write(player.getPassword() + separator +
+            writer.write(
+                    player.getPassword() + separator +
                     player.getRank() + separator +
                     player.getToken() + separator +
                     player.getTokenLimit() + separator +
@@ -161,6 +164,17 @@ public class ClientHandler implements Runnable{
             writer.close();
         } catch (IOException e) {
             System.out.println("An error occurred: " + e.getMessage());
+        }
+    }
+
+    public void startGame(ArrayList<Player> Playerlist, BufferedReader inputStream, PrintWriter outputStream) throws IOException {
+        //Todo begin game instance on server side
+        Game game = new Game(1, Playerlist, inputStream, outputStream);
+        if(game.run() == -1){
+            outputStream.println("OOPS! Something went wrong");
+        }
+        else{
+            //TODO DO SOMETHING WHEN THE USER HAS COMPLETED A GAME SUCCESFULLY
         }
     }
 }
