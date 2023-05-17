@@ -6,24 +6,17 @@ public class Game {
 
     private String state;
     private ArrayList<Question> questions;
-    private Player player;
-    private int numberPlayers;
+    private static int maxgameinstances = 1;
+    private static int gameinstances = 0;
+    private static final int numberPlayers = 1;
     private List<Player> players;
     private String questionsPath;
     private ArrayList<Question> gamequestions;
-    private int gamequestionnumber = 30;
+    private int gamequestionnumber = 5;
 
-    private BufferedReader inputStream;
-    private PrintWriter outputStream;
+    public Game(List<Player> players){
 
-    public Game(int numberPlayers, List<Player> gameplayers, BufferedReader inputStream, PrintWriter outputStream){
-
-        this.numberPlayers = gameplayers.size();
-        this.players = gameplayers;
-
-        //Socket Variables
-        this.inputStream = inputStream;
-        this.outputStream = outputStream;
+        this.players = players;
 
         //Game Variables
         this.state = "MENU";
@@ -34,7 +27,17 @@ public class Game {
         //TODO ADD MORE STUFF SURELY (THIS IS A SIMPLE MOCKUP)
     }
 
+    public static int getNumberPlayers() {
+        return numberPlayers;
+    }
+
     public int run() throws IOException {
+
+        gameinstances += 1;
+
+        if(gameinstances > maxgameinstances){
+            System.out.println("NUMBER OF GAME INSTANCES IS BIGGER THAN ITS MAXIMUM AMMOUNT");
+        }
 
         loadQuestions();
         selectRandomQuestions();
@@ -44,42 +47,58 @@ public class Game {
             if (this.state == "MENU") {
                 //TODO IMPLEMENT RANKED PLAY
                 //TODO SHOW PLAYER LEADERBOARD AT THE END OF EACH QUESTION
-                //TODO ONLY SELECT X PLAYERS (REMOVE X PLAYERS FROM THE LIST)
+                //TODO PROCESS INPUT OF X PLAYERS AND HANDLE X PLAYERS RESPONSES
 
-                outputStream.println("WRITE (PLAY) TO START PLAYING");
-                outputStream.println("INPUT");
-                String input = inputStream.readLine();
+                for(Player player : this.players){
+                    PrintWriter playeroutputStream = player.getOutputStream();
+                    BufferedReader playerinputStream = player.getInputStream();
 
-                if (input.toUpperCase().equals("PLAY")) {
-                    this.state = "GAME";
+                    playeroutputStream.println("WRITE (PLAY) TO START PLAYING");
+                    playeroutputStream.println("INPUT");
+
+                    String input = playerinputStream.readLine();
+
+                    if (input.toUpperCase().equals("PLAY")) {
+                        this.state = "GAME";
+                    }
+
                 }
+
                 } else if (this.state == "GAME") {
                     //Output question, answers and validate them
                     if(this.gamequestions.size() != 0){
                         for(int i=0; i<this.gamequestions.size(); i++){
 
-                            //Output question to the client
-                            outputStream.println("Question number: " + (i+1));
-                            outputStream.println("Current Points: ");
-                            this.gamequestions.get(i).print(outputStream);
+                            //Output question to the clients
 
-                            outputStream.println("Please write the answer: ");
-                            outputStream.println("INPUT");
+                            for(Player player : this.players){
+                                PrintWriter playeroutputStream = player.getOutputStream();
+                                BufferedReader playerinputStream = player.getInputStream();
 
-                            String playeranswer = inputStream.readLine();
 
-                            List<String>  answers = this.gamequestions.get(i).getOptions();
+                                playeroutputStream.println("Question number: " + (i+1));
+                                playeroutputStream.println("Current Points: ");
+                                this.gamequestions.get(i).print(playeroutputStream);
 
-                            String rightanswer = answers.get(this.gamequestions.get(i).getAnswer());
+                                playeroutputStream.println("Please write the answer: ");
+                                playeroutputStream.println("INPUT");
 
-                            if(rightanswer.toUpperCase().equals(playeranswer.toUpperCase())){
-                                outputStream.println("Your answer is correct");
+                                String playeranswer = playerinputStream.readLine();
+
+                                List<String>  answers = this.gamequestions.get(i).getOptions();
+
+                                String rightanswer = answers.get(this.gamequestions.get(i).getAnswer());
+
+                                if(rightanswer.toUpperCase().equals(playeranswer.toUpperCase())){
+                                    playeroutputStream.println("Your answer is correct");
+                                }
+                                else{
+                                    playeroutputStream.println("Your answer is wrong");
+                                }
+
+                                playeroutputStream.println("Correct Answer Was: " + rightanswer);
                             }
-                            else{
-                                outputStream.println("Your answer is wrong");
-                            }
 
-                            outputStream.println("Correct Answer Was: " + rightanswer);
                         }
                         this.state = "END";
                     }
@@ -88,7 +107,13 @@ public class Game {
                     }
                 } else if (this.state == "END") {
                     //TODO ADD PLAYER LEADERBOARD AT THE END
-                    outputStream.println("Thanks for playing !");
+
+                    for(Player player : this.players){
+                        PrintWriter playeroutputStream = player.getOutputStream();
+                        BufferedReader playerinputStream = player.getInputStream();
+
+                        playeroutputStream.println("Thanks for playing !");
+                    }
                     break;
                 } else {
                     return -1;
@@ -138,5 +163,21 @@ public class Game {
             this.questions.add(question);
         }
         scanner.close();
+    }
+
+    public static int getMaxgameinstances() {
+        return maxgameinstances;
+    }
+
+    public void setMaxgameinstances(int maxgameinstances) {
+        this.maxgameinstances = maxgameinstances;
+    }
+
+    public static int getGameinstances() {
+        return gameinstances;
+    }
+
+    public void setGameinstances(int gameinstances) {
+        this.gameinstances = gameinstances;
     }
 }

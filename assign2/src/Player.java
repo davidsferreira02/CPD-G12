@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+import java.io.PrintWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.security.SecureRandom;
@@ -10,6 +12,10 @@ public class Player {
 
     private long tokenLimit;
     private long timestampQueue;
+
+    //Socket Variables
+    private BufferedReader inputStream;
+    private PrintWriter outputStream;
 
     public Player(String username, String password){
         this.username = username;
@@ -92,5 +98,21 @@ public class Player {
         System.out.println("Token: " + this.token);
         System.out.println("TokenLimit: " + this.tokenLimit);
         System.out.println("TimestampQueue: " + this.timestampQueue);
+    }
+
+    public BufferedReader getInputStream() {
+        return inputStream;
+    }
+
+    public void setInputStream(BufferedReader inputStream) {
+        this.inputStream = inputStream;
+    }
+
+    public PrintWriter getOutputStream() {
+        return outputStream;
+    }
+
+    public void setOutputStream(PrintWriter outputStream) {
+        this.outputStream = outputStream;
     }
 }

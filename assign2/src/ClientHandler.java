@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 
 public class ClientHandler implements Runnable{
@@ -15,6 +16,8 @@ public class ClientHandler implements Runnable{
     private ArrayList<Player> players;
 
     boolean isLoggedIn = false;
+
+    //TODO IF GAME IS FULL PROBABLY CREATE A WAITING ROOM/LOBBY
 
 
     public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> players) {
@@ -48,9 +51,13 @@ public class ClientHandler implements Runnable{
                 }
                 else {
 
-                    if(this.queue.size() == 1){
-                        startGame(this.queue, inputStream, outputStream);
+                    if(this.queue.size() >= Game.getNumberPlayers()){
+                        startGame();
                     }
+                    else{
+                        //TODO ADD A WAITING PLAYERS LOBBY/MESSAGE
+                    }
+
                 }
             }
 
@@ -113,6 +120,8 @@ public class ClientHandler implements Runnable{
                     System.out.println("LOGIN SUCCESS: " + username);
                     outputStream.println("Login Successful!");
                     addToQueue(player);
+                    player.setInputStream(inputStream);
+                    player.setOutputStream(outputStream);
                     return;
                 }
                 //Wrong password
@@ -167,14 +176,20 @@ public class ClientHandler implements Runnable{
         }
     }
 
-    public void startGame(ArrayList<Player> Playerlist, BufferedReader inputStream, PrintWriter outputStream) throws IOException {
-        //Todo begin game instance on server side
-        Game game = new Game(1, Playerlist, inputStream, outputStream);
-        if(game.run() == -1){
-            outputStream.println("OOPS! Something went wrong");
+    public void startGame() throws IOException {
+
+        List<Player> Playerlist = new ArrayList<>();
+
+        //Select Game Players
+        for(int i=0; i<Game.getNumberPlayers(); i++){
+            Playerlist.add(this.queue.remove(0));
         }
-        else{
-            //TODO DO SOMETHING WHEN THE USER HAS COMPLETED A GAME SUCCESFULLY
+
+        Game game = new Game(Playerlist);
+        if(Game.getGameinstances() < Game.getMaxgameinstances()){
+            System.out.println(Playerlist.size());
+            game.run();
         }
+
     }
 }
