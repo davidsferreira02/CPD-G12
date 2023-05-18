@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -17,6 +19,8 @@ public class ClientHandler implements Runnable{
 
     boolean isLoggedIn = false;
 
+    boolean isStopped = false;
+
     //TODO IF GAME IS FULL PROBABLY CREATE A WAITING ROOM/LOBBY
 
 
@@ -33,12 +37,9 @@ public class ClientHandler implements Runnable{
 
             outputStream.println("Connected to Trivia Server.");
 
-            // Perform authentication logic here
-
-            //outputStream.println("LOGIN");
 
             // Read and print messages from the client
-            boolean isStopped = false;
+
             String receivedMessage;
 
             //TODO HANDLE isStopped!
@@ -63,19 +64,6 @@ public class ClientHandler implements Runnable{
             }
 
 
-
-            /*while (!isStopped) {
-                receivedMessage = inputStream.readLine();
-                if(receivedMessage.equals("quit")){
-                    isStopped = true;
-                }
-                System.out.println("Received message: " + receivedMessage);
-            }*/
-
-            synchronized (this.queue) {
-
-            }
-
             outputStream.flush();
             outputStream.close();
             inputStream.close();
@@ -84,7 +72,7 @@ public class ClientHandler implements Runnable{
 
         } catch (IOException e) {
             //report exception somewhere.
-            e.printStackTrace();
+            stop();
         } finally {
             // Close the socket in the finally block
             try {
@@ -93,21 +81,48 @@ public class ClientHandler implements Runnable{
                 }
             } catch (IOException e) {
                 // Handle IOException while closing the socket
-                e.printStackTrace();
+                stop();
             }
         }
     }
 
     public void login() throws IOException {
-        outputStream.println("LOGIN");
-        //Request token
-        //if token = 0 or does not exist
-        //require Authentication
+        //TODO handle timeouts
 
+        boolean validToken = false;
+
+
+        //Request token
+        outputStream.println("AUTH");
+        String token = askClientInput();
+        //if token = 0 or does not exist
+        if(!token.equals("0")) {
+            for(Player player : players) {
+                if(player.getToken().equals(token)) {
+
+                    validToken = true;
+                    isLoggedIn = true;
+                    System.out.println("[AUTH] LOGIN TOKEN SUCCESS: " + player.getUsername());
+                    outputStream.println("AUTHOK");
+                    addToQueue(player);
+                    player.setInputStream(inputStream);
+                    player.setOutputStream(outputStream);
+                    return;
+                }
+            }
+        }
+
+        //require Login
+        outputStream.println("LOGIN");
         //read username
-        String username = inputStream.readLine();
+        String username = askClientInput();
+        System.out.println(username);
+        if(username == null){
+            return;
+        }
         //read password
-        String password = inputStream.readLine();
+        String password = askClientInput();
+        System.out.println(password);
 
         //verify credentials
         for(Player player : players) {
@@ -117,7 +132,10 @@ public class ClientHandler implements Runnable{
                 if(password.equals(player.getPassword())) {
                     isLoggedIn = true;
                     System.out.println("LOGIN SUCCESS: " + username);
-                    outputStream.println("Login Successful!");
+                    outputStream.println("LOGINOK");
+                    //send token
+                    player.generateToken(60);
+                    outputStream.println(player.getToken());
                     addToQueue(player);
                     player.setInputStream(inputStream);
                     player.setOutputStream(outputStream);
@@ -126,7 +144,6 @@ public class ClientHandler implements Runnable{
                 //Wrong password
                 else {
                     System.out.println("LOGIN FAILED: " + username);
-                    outputStream.println("Login Failed!");
                     return;
                 }
             }
@@ -139,56 +156,31 @@ public class ClientHandler implements Runnable{
     public synchronized void addToQueue(Player player) {
         if(player.getTimestampQueue() == 0){
             player.generateTimestampQueue();
-            //update userfile
+            //TODO update userfile
         }
         queue.add(player);
         orderQueueByTimeInQueue();
-        updateUserFile(player);
+        player.updateUserFile("assign2/src/players/");
     }
 
     public synchronized void orderQueueByTimeInQueue() {
         queue.sort(Comparator.comparingLong(Player::getTimestampQueue));
     }
 
-    public synchronized void updateUserFile(Player player) {
-        //username:password:rank:token:tokenLimit:timestampQueue
+    public String askClientInput() {
+        String input = null;
+        //inputStream
         try {
-            String filename = "assign/src/players/" + player.getUsername() + ".txt";
-            File file = new File(filename);
-
-            // Check if the file doesn't exist
-            if (!file.exists()) {
-                file.createNewFile(); // Create a new file
-            }
-
-            FileWriter writer = new FileWriter(filename);
-            String separator = ":";
-            writer.write(
-                    player.getPassword() + separator +
-                    player.getRank() + separator +
-                    player.getToken() + separator +
-                    player.getTokenLimit() + separator +
-                    player.getTimestampQueue());
-            writer.close();
+            clientSocket.setSoTimeout(30000);
+            input = inputStream.readLine();
         } catch (IOException e) {
-            System.out.println("An error occurred: " + e.getMessage());
+            stop();
         }
+
+        return input;
     }
 
-    public void startGame() throws IOException {
-
-        List<Player> Playerlist = new ArrayList<>();
-
-        //Select Game Players
-        for(int i=0; i<Game.getNumberPlayers(); i++){
-            Playerlist.add(this.queue.remove(0));
-        }
-
-        Game game = new Game(Playerlist);
-        if(Game.getGameinstances() < Game.getMaxgameinstances()){
-            System.out.println(Playerlist.size());
-            game.run();
-        }
-
+    public void stop() {
+        isStopped = true;
     }
 }

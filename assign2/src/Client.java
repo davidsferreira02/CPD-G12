@@ -1,8 +1,7 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Client {
@@ -19,6 +18,7 @@ public class Client {
 
     public boolean isLoggedIn = false;
 
+    private String token = "0";
 
     public Client() throws IOException {
         socket =  new Socket(SERVER_ADDRESS, SERVER_PORT);
@@ -27,7 +27,9 @@ public class Client {
     }
 
     public static void main(String[] args) throws IOException {
+
         Client client = new Client();
+        client.loadToken();
 
 
         BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
@@ -39,11 +41,14 @@ public class Client {
         StringBuilder answers = new StringBuilder();
         // Send messages to the server
         while (!quit) {
-            received = client.in.readLine();
+            received = client.serverMessage();
 
             //handle login
             if(received.equals("LOGIN")){
                 client.login();
+            }
+            else if (received.equals("AUTH")) {
+                client.auth();
             }
             /*else if(received.equals("INPUT")){
                 Scanner scanner = new Scanner(System.in);
@@ -98,8 +103,65 @@ public class Client {
         out.println(username);
         out.println(password);
         System.out.println();
-        System.out.println(in.readLine());
+        //receive login success
+        if(serverMessage().equals("LOGINOK")) {
+            System.out.println("Login successful!");
+            token = serverMessage();
+            saveToken();
+        }
+        else{
+            System.out.println("Login Failed!");
+        }
+        System.out.println(serverMessage());
+
         System.out.println();
+    }
+
+    public void loadToken() {
+        String filePath = "assign2/src/token.txt";
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            try {
+                FileWriter writer = new FileWriter(file);
+                writer.write("0"); // Write default token to the file
+                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create the file: " + filePath, e);
+            }
+        }
+        else {
+            Scanner scanner = null;
+            try {
+                scanner = new Scanner(file);
+                this.token = scanner.nextLine();
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Failed to read the file: " + filePath, e);
+            } finally {
+                if (scanner != null) {
+                    scanner.close();
+                }
+            }
+        }
+    }
+
+    public void saveToken() {
+        String filePath = "assign2/src/token.txt";
+        File file = new File(filePath);
+
+        try {
+            FileWriter writer = new FileWriter(file);
+            writer.write(token); // Write default token to the file
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create the file: " + filePath, e);
+        }
+
+    }
+    public void auth() {
+        out.println(token);
+        if(serverMessage().equals("AUTHOK"))
+            System.out.println("Auth Token Successful");
     }
 
     public static String handleInputTimeout() {
@@ -140,6 +202,20 @@ public class Client {
             return "T";
         }
 
+    }
+
+    public String serverMessage() {
+        String message = null;
+        //inputStream
+        try {
+            socket.setSoTimeout(60000);
+            message = in.readLine();
+        } catch (IOException e) {
+            //TODO STOP
+            //stop();
+        }
+
+        return message;
     }
 
 }

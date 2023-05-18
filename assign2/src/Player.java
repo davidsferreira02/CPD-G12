@@ -1,5 +1,7 @@
-import java.io.BufferedReader;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.security.SecureRandom;
@@ -67,7 +69,29 @@ public class Player {
 
     public void generateToken(int minutes) {
         SecureRandom random = new SecureRandom();
-        this.token = random.nextLong(1000000, 10000000) + this.username;
+        String tokenGen = random.nextLong(1000000, 10000000) + this.username;
+
+        try {
+            // Create an instance of MessageDigest with SHA-256 algorithm
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            // Convert the password string to bytes
+            byte[] passwordBytes = tokenGen.getBytes(StandardCharsets.UTF_8);
+
+            // Update the digest with the password bytes
+            byte[] hashedBytes = digest.digest(passwordBytes);
+
+            // Convert the hashed bytes to hexadecimal format
+            StringBuilder hexBuilder = new StringBuilder();
+            for (byte b : hashedBytes) {
+                hexBuilder.append(String.format("%02x", b));
+            }
+
+            this.token = hexBuilder.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
         this.tokenLimit = Instant.now().plus(minutes, ChronoUnit.MINUTES).getEpochSecond();
     }
 
@@ -114,5 +138,30 @@ public class Player {
 
     public void setOutputStream(PrintWriter outputStream) {
         this.outputStream = outputStream;
+    }
+
+    public synchronized void updateUserFile(String path) {
+        //username:password:rank:token:tokenLimit:timestampQueue
+        try {
+            String filename = path + this.username + ".txt";
+            File file = new File(filename);
+
+            // Check if the file doesn't exist
+            if (!file.exists()) {
+                file.createNewFile(); // Create a new file
+            }
+
+            FileWriter writer = new FileWriter(filename);
+            String separator = ":";
+            writer.write(
+                    getPassword() + separator +
+                            getRank() + separator +
+                            getToken() + separator +
+                            getTokenLimit() + separator +
+                            getTimestampQueue());
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("An error occurred: " + e.getMessage());
+        }
     }
 }

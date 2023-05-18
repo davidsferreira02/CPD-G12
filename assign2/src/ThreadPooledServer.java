@@ -8,6 +8,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -54,28 +55,28 @@ public class ThreadPooledServer implements Runnable{
             try {
                 serverSocket.setSoTimeout(5000);
                 clientSocket = this.serverSocket.accept();
-                System.out.println("New Connection: " + clientSocket);
+                System.out.println("[SERVER] New Connection: " + clientSocket);
                 //waiting for thread pool
                 this.threadPool.execute(
                         new ClientHandler(clientSocket, this.queue, this.players));
 
-                System.out.println("QUEUE: " + queue.size());
-                System.out.println("Active Count: " + Thread.activeCount());
+                System.out.println("[SERVER] QUEUE: " + queue.size());
+                System.out.println("[SERVER] Active Count: " + Thread.activeCount());
             } catch(SocketTimeoutException e){
 
             } catch (IOException e) {
                 if(isStopped()) {
-                    System.out.println("Server Stopped.") ;
+                    System.out.println("[SERVER] Server Stopped.") ;
                     break;
                 }
                 throw new RuntimeException(
-                        "Error accepting client connection", e);
+                        "[SERVER] Error accepting client connection", e);
             }
 
         }
         this.gamePool.shutdown();
         this.threadPool.shutdown();
-        System.out.println("Server Stopped.") ;
+        System.out.println("[SERVER] Server Stopped.") ;
     }
 
 
@@ -104,12 +105,19 @@ public class ThreadPooledServer implements Runnable{
         /*for( Player player : queue){
             System.out.println("Player Q: " + player.getUsername());
         }*/
-        if(queue.size() >= MAX_PLAYERS && activeGames.size() < MAX_GAMES) {
+        for( Player player : queue) {
+            System.out.println(player.getUsername() + ":" + (Instant.now().getEpochSecond() - player.getTimestampQueue())/60 + " Minutes");
+        }
+        System.out.print("\n[CHECKGAMESTART] ");
+        if(queue.size() >= MAX_PLAYERS && activeGames.size() <= MAX_GAMES) {
             List<Player> gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
-
+            queue.subList(0, MAX_PLAYERS).clear();
             Game game = new Game(gamePlayers);
             activeGames.add(game);
-
+            System.out.println("Starting game: ");
+            for(Player player : gamePlayers) {
+                System.out.println("\t" + player.getUsername());
+            }
             gamePool.execute(() -> {
                 try {
                     game.run();
@@ -118,6 +126,9 @@ public class ThreadPooledServer implements Runnable{
                     e.printStackTrace();
                 }
             });
+        }
+        else {
+            System.out.print("Not enough players: " + queue.size() + "\n");
         }
     }
 
@@ -149,9 +160,10 @@ public class ThreadPooledServer implements Runnable{
                         player.setToken(token);
                         player.setTokenLimit(tokenLimit);
                         player.setTimestampQueue(timestampQueue);
-
-                        player.generateToken(60);
-
+                        if(player.getToken().equals("0")) {
+                            player.generateToken(60);
+                        }
+                        if(player.getTokenLimit() >= Instant.now().getEpochSecond()/60)
                         players.add(player);
                     } catch (IOException e) {
                         System.out.println("Error reading file: " + fileName);
