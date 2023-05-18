@@ -3,6 +3,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Scanner;
 
 
 public class ClientHandler implements Runnable{
@@ -11,8 +12,8 @@ public class ClientHandler implements Runnable{
 
     private BufferedReader inputStream;
     private PrintWriter outputStream;
-    private ArrayList<Player> queue;
 
+    private ArrayList<Player> queue = new ArrayList<>();
     private ArrayList<Player> players;
 
     boolean isLoggedIn = false;
@@ -22,7 +23,7 @@ public class ClientHandler implements Runnable{
 
     public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> players) {
         this.clientSocket = clientSocket;
-        this.queue   = queue;
+        this.queue = queue;
         this.players = players;
     }
 
@@ -50,31 +51,8 @@ public class ClientHandler implements Runnable{
                         System.out.println(player.getUsername() + ":" + player.getTimestampQueue());
                     }
                 }
-                /*else {
-
-                    if(this.queue.size() >= Game.getNumberPlayers()){
-                        startGame();
-                    }
-                    else{
-                        //TODO ADD A WAITING PLAYERS LOBBY/MESSAGE
-                    }
-
-                }*/
             }
 
-
-
-            /*while (!isStopped) {
-                receivedMessage = inputStream.readLine();
-                if(receivedMessage.equals("quit")){
-                    isStopped = true;
-                }
-                System.out.println("Received message: " + receivedMessage);
-            }*/
-
-            synchronized (this.queue) {
-
-            }
 
             outputStream.flush();
             outputStream.close();
@@ -118,9 +96,10 @@ public class ClientHandler implements Runnable{
                     isLoggedIn = true;
                     System.out.println("LOGIN SUCCESS: " + username);
                     outputStream.println("Login Successful!");
-                    addToQueue(player);
                     player.setInputStream(inputStream);
                     player.setOutputStream(outputStream);
+                    //Asks player what game mode he is willing to play
+                    selectGameMode(player);
                     return;
                 }
                 //Wrong password
@@ -141,6 +120,7 @@ public class ClientHandler implements Runnable{
             player.generateTimestampQueue();
             //update userfile
         }
+        //TODO FIX THIS
         queue.add(player);
         orderQueueByTimeInQueue();
         updateUserFile(player);
@@ -153,7 +133,7 @@ public class ClientHandler implements Runnable{
     public synchronized void updateUserFile(Player player) {
         //username:password:rank:token:tokenLimit:timestampQueue
         try {
-            String filename = "assign/src/players/" + player.getUsername() + ".txt";
+            String filename = "src/players/" + player.getUsername() + ".txt";
             File file = new File(filename);
 
             // Check if the file doesn't exist
@@ -175,20 +155,25 @@ public class ClientHandler implements Runnable{
         }
     }
 
-    public void startGame() throws IOException {
+    public void selectGameMode(Player player) throws IOException {
+        outputStream.println("Please select a Game Mode: ");
+        outputStream.println("0 - Unranked");
+        outputStream.println("1- Ranked");
+        outputStream.println("INPUT");
+        int gamemode = Integer.valueOf(inputStream.readLine());
 
-        List<Player> Playerlist = new ArrayList<>();
-
-        //Select Game Players
-        for(int i=0; i<Game.getNumberPlayers(); i++){
-            Playerlist.add(this.queue.remove(0));
+        //Get Player's game mode and adds him to the queue
+        if(gamemode == 0 || gamemode == 1){
+            player.setGamemode(gamemode);
+            System.out.println(player.getGamemode());
+            addToQueue(player);
         }
-
-        Game game = new Game(Playerlist);
-        if(Game.getGameinstances() < Game.getMaxgameinstances()){
-            System.out.println(Playerlist.size());
-            game.run();
+        else{
+            outputStream.println("Invalid Option");
+            outputStream.println("Please provide a valid one!");
+            outputStream.println("---------------------------");
+            selectGameMode(player);
         }
-
     }
+
 }

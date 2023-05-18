@@ -6,8 +6,10 @@ public class Game {
 
     private String state;
     private ArrayList<Question> questions;
+    /*
     private static int maxgameinstances = 1;
     private static int gameinstances = 0;
+     */
     private static final int numberPlayers = 1;
     private List<Player> players;
     private String questionsPath;
@@ -20,7 +22,7 @@ public class Game {
 
         //Game Variables
         this.state = "MENU";
-        this.questionsPath = "assign2/src/questions.txt";
+        this.questionsPath = "src/questions.txt";
         this.questions = new ArrayList<>();
         this.gamequestions = new ArrayList<>();
 
@@ -33,11 +35,13 @@ public class Game {
 
     public int run() throws IOException {
 
+        /*
         gameinstances += 1;
 
         if(gameinstances > maxgameinstances){
             System.out.println("NUMBER OF GAME INSTANCES IS BIGGER THAN ITS MAXIMUM AMMOUNT");
         }
+         */
 
         loadQuestions();
         selectRandomQuestions();
@@ -166,6 +170,7 @@ public class Game {
         scanner.close();
     }
 
+    /*
     public static int getMaxgameinstances() {
         return maxgameinstances;
     }
@@ -181,4 +186,5 @@ public class Game {
     public void setGameinstances(int gameinstances) {
         this.gameinstances = gameinstances;
     }
+     */
 }

@@ -5,7 +5,6 @@ import java.time.temporal.ChronoUnit;
 import java.security.SecureRandom;
 
 public class Player {
-    private int rank;
     private String username;
     private String password;
     private String token;
@@ -16,6 +15,10 @@ public class Player {
     //Socket Variables
     private BufferedReader inputStream;
     private PrintWriter outputStream;
+
+    //Game Mode Variables
+    private int rank;
+    private int gamemode = 0; //0 -> Unranked ; 1 -> Ranked
 
     public Player(String username, String password){
         this.username = username;
@@ -115,4 +118,13 @@ public class Player {
     public void setOutputStream(PrintWriter outputStream) {
         this.outputStream = outputStream;
     }
+
+    public int getGamemode() {
+        return gamemode;
+    }
+
+    public void setGamemode(int gamemode) {
+        this.gamemode = gamemode;
+    }
+
 }

@@ -73,7 +73,15 @@ public class Client {
                     }
                 }
                 else {
-                    System.out.println(received);
+                    //Ask user to input something after a prompt on the command line and handles it(Non in-game related)
+                    if(received.equals("INPUT")){
+                        Scanner scanner = new Scanner(System.in);
+                        String input = scanner.nextLine();
+                        client.out.println(input);
+                    }
+                    else{
+                        System.out.println(received);
+                    }
                 }
             }
 
