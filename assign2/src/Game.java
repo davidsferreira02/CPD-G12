@@ -20,7 +20,7 @@ public class Game {
 
         //Game Variables
         this.state = "MENU";
-        this.questionsPath = "src/questions.txt";
+        this.questionsPath = "assign2/src/questions.txt";
         this.questions = new ArrayList<>();
         this.gamequestions = new ArrayList<>();
 
@@ -53,8 +53,7 @@ public class Game {
                     PrintWriter playeroutputStream = player.getOutputStream();
                     BufferedReader playerinputStream = player.getInputStream();
 
-                    playeroutputStream.println("WRITE (PLAY) TO START PLAYING");
-                    playeroutputStream.println("INPUT");
+                    playeroutputStream.println("GAME");
 
                     String input = playerinputStream.readLine();
 
@@ -73,7 +72,7 @@ public class Game {
 
                             for(Player player : this.players){
                                 PrintWriter playeroutputStream = player.getOutputStream();
-                                BufferedReader playerinputStream = player.getInputStream();
+//                                BufferedReader playerinputStream = player.getInputStream();
 
 
                                 playeroutputStream.println("Question number: " + (i+1));
@@ -81,37 +80,39 @@ public class Game {
                                 this.gamequestions.get(i).print(playeroutputStream);
 
                                 playeroutputStream.println("Please write the answer: ");
+                                //Ask for player input
                                 playeroutputStream.println("INPUT");
 
-                                String playeranswer = playerinputStream.readLine();
+//                                String playeranswer = playerinputStream.readLine();
 
                                 List<String>  answers = this.gamequestions.get(i).getOptions();
 
                                 String rightanswer = answers.get(this.gamequestions.get(i).getAnswer());
 
-                                if(rightanswer.toUpperCase().equals(playeranswer.toUpperCase())){
-                                    playeroutputStream.println("Your answer is correct");
-                                }
-                                else{
-                                    playeroutputStream.println("Your answer is wrong");
-                                }
+//                                if(rightanswer.toUpperCase().equals(playeranswer.toUpperCase())){
+//                                    playeroutputStream.println("Your answer is correct");
+//                                }
+//                                else{
+//                                    playeroutputStream.println("Your answer is wrong");
+//                                }
 
                                 playeroutputStream.println("Correct Answer Was: " + rightanswer);
                             }
 
                         }
-                        this.state = "END";
+                        this.state = "ENDGAME";
                     }
                     else{
                         return -1;
                     }
-                } else if (this.state == "END") {
+                } else if (this.state == "ENDGAME") {
                     //TODO ADD PLAYER LEADERBOARD AT THE END
 
                     for(Player player : this.players){
                         PrintWriter playeroutputStream = player.getOutputStream();
                         BufferedReader playerinputStream = player.getInputStream();
-
+                        playeroutputStream.println("ENDGAME");
+                        System.out.println(playerinputStream.readLine());
                         playeroutputStream.println("Thanks for playing !");
                     }
                     break;

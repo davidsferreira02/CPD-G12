@@ -41,6 +41,7 @@ public class ClientHandler implements Runnable{
             boolean isStopped = false;
             String receivedMessage;
 
+            //TODO HANDLE isStopped!
             while(!isStopped){
                 if(!isLoggedIn) {
                     System.out.println("Asking login: " + clientSocket);
@@ -49,7 +50,7 @@ public class ClientHandler implements Runnable{
                         System.out.println(player.getUsername() + ":" + player.getTimestampQueue());
                     }
                 }
-                else {
+                /*else {
 
                     if(this.queue.size() >= Game.getNumberPlayers()){
                         startGame();
@@ -58,7 +59,7 @@ public class ClientHandler implements Runnable{
                         //TODO ADD A WAITING PLAYERS LOBBY/MESSAGE
                     }
 
-                }
+                }*/
             }
 
 
@@ -75,12 +76,10 @@ public class ClientHandler implements Runnable{
 
             }
 
-            System.out.println("Loop");
             outputStream.flush();
             outputStream.close();
             inputStream.close();
             clientSocket.close();
-            System.out.println("Finish");
 
 
         } catch (IOException e) {
@@ -154,7 +153,7 @@ public class ClientHandler implements Runnable{
     public synchronized void updateUserFile(Player player) {
         //username:password:rank:token:tokenLimit:timestampQueue
         try {
-            String filename = "src/players/" + player.getUsername() + ".txt";
+            String filename = "assign/src/players/" + player.getUsername() + ".txt";
             File file = new File(filename);
 
             // Check if the file doesn't exist

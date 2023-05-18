@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,15 +15,22 @@ import java.util.concurrent.Executors;
 
 public class ThreadPooledServer implements Runnable{
 
+    private static final int MAX_PLAYERS = 2;
+    private static final int MAX_QUEUE_PLAYERS = 20;
+    private static final int MAX_GAMES = 5;
+
+
     protected int          serverPort   = 27277;
     protected ServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
-    protected ExecutorService threadPool =
-            Executors.newFixedThreadPool(4);
+    protected ExecutorService threadPool;
+    protected ExecutorService gamePool;
+
 
     private ArrayList<Player> queue = new ArrayList<>();
     private ArrayList<Player> players = new ArrayList<>();
+    private ArrayList<Game> activeGames = new ArrayList<>();
 
     public ThreadPooledServer(int port){
         this.serverPort = port;
@@ -32,16 +40,29 @@ public class ThreadPooledServer implements Runnable{
         synchronized(this){
             this.runningThread = Thread.currentThread();
         }
-        loadPlayers("src/players");
+        threadPool = Executors.newFixedThreadPool(MAX_QUEUE_PLAYERS);
+        gamePool = Executors.newFixedThreadPool(MAX_GAMES);
+
+        loadPlayers("assign2/src/players");
         /*for( Player player : players) {
             player.printPlayer();
         }*/
         openServerSocket();
-        while(! isStopped()){
+        while(!isStopped()){
+            checkGameStart();
             Socket clientSocket = null;
             try {
+                serverSocket.setSoTimeout(5000);
                 clientSocket = this.serverSocket.accept();
                 System.out.println("New Connection: " + clientSocket);
+                //waiting for thread pool
+                this.threadPool.execute(
+                        new ClientHandler(clientSocket, this.queue, this.players));
+
+                System.out.println("QUEUE: " + queue.size());
+                System.out.println("Active Count: " + Thread.activeCount());
+            } catch(SocketTimeoutException e){
+
             } catch (IOException e) {
                 if(isStopped()) {
                     System.out.println("Server Stopped.") ;
@@ -50,11 +71,9 @@ public class ThreadPooledServer implements Runnable{
                 throw new RuntimeException(
                         "Error accepting client connection", e);
             }
-            //waiting for thread pool
-            this.threadPool.execute(
-                    new ClientHandler(clientSocket, this.queue, this.players));
-            System.out.println("Active Count: " + Thread.activeCount());
+
         }
+        this.gamePool.shutdown();
         this.threadPool.shutdown();
         System.out.println("Server Stopped.") ;
     }
@@ -78,6 +97,27 @@ public class ThreadPooledServer implements Runnable{
             this.serverSocket = new ServerSocket(this.serverPort);
         } catch (IOException e) {
             throw new RuntimeException("Cannot open port 8080", e);
+        }
+    }
+
+    private synchronized void checkGameStart() {
+        /*for( Player player : queue){
+            System.out.println("Player Q: " + player.getUsername());
+        }*/
+        if(queue.size() >= MAX_PLAYERS && activeGames.size() < MAX_GAMES) {
+            List<Player> gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
+
+            Game game = new Game(gamePlayers);
+            activeGames.add(game);
+
+            gamePool.execute(() -> {
+                try {
+                    game.run();
+                    activeGames.remove(game);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
