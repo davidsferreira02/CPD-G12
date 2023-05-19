@@ -10,7 +10,6 @@ public class Game {
     private static int maxgameinstances = 1;
     private static int gameinstances = 0;
      */
-    private static final int numberPlayers = 1;
     private List<Player> players;
     private String questionsPath;
     private ArrayList<Question> gamequestions;
@@ -26,11 +25,6 @@ public class Game {
         this.questions = new ArrayList<>();
         this.gamequestions = new ArrayList<>();
 
-        //TODO ADD MORE STUFF SURELY (THIS IS A SIMPLE MOCKUP)
-    }
-
-    public static int getNumberPlayers() {
-        return numberPlayers;
     }
 
     public int run() throws IOException {
@@ -49,9 +43,6 @@ public class Game {
         while(true) {
 
             if (this.state == "MENU") {
-                //TODO IMPLEMENT RANKED PLAY
-                //TODO SHOW PLAYER LEADERBOARD AT THE END OF EACH QUESTION
-                //TODO PROCESS INPUT OF X PLAYERS AND HANDLE X PLAYERS RESPONSES
 
                 for(Player player : this.players){
                     PrintWriter playeroutputStream = player.getOutputStream();
@@ -111,6 +102,7 @@ public class Game {
                     }
                 } else if (this.state == "ENDGAME") {
                     //TODO ADD PLAYER LEADERBOARD AT THE END
+                    //TODO ADD PLAYER POINTS AND FIND OUT WHO WON, ETC
 
                     for(Player player : this.players){
                         PrintWriter playeroutputStream = player.getOutputStream();

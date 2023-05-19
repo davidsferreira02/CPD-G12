@@ -20,6 +20,8 @@ public class Player {
     private int rank;
     private int gamemode = 0; //0 -> Unranked ; 1 -> Ranked
 
+    private boolean isWaitingforPlayers = true;
+
     public Player(String username, String password){
         this.username = username;
         this.password = password;
@@ -127,4 +129,11 @@ public class Player {
         this.gamemode = gamemode;
     }
 
+    public boolean isWaitingforPlayers() {
+        return isWaitingforPlayers;
+    }
+
+    public void setWaitingforPlayers(boolean waitingforPlayers) {
+        isWaitingforPlayers = waitingforPlayers;
+    }
 }

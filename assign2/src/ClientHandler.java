@@ -18,6 +18,7 @@ public class ClientHandler implements Runnable{
 
     boolean isLoggedIn = false;
 
+
     //TODO IF GAME IS FULL PROBABLY CREATE A WAITING ROOM/LOBBY
 
 
@@ -120,7 +121,7 @@ public class ClientHandler implements Runnable{
             player.generateTimestampQueue();
             //update userfile
         }
-        //TODO FIX THIS
+
         queue.add(player);
         orderQueueByTimeInQueue();
         updateUserFile(player);

@@ -21,7 +21,6 @@ public class ThreadPooledServer implements Runnable{
     private static final int MAX_QUEUE_PLAYERS = 20;
     private static final int MAX_GAMES = 5;
 
-
     protected int          serverPort   = 27277;
     protected ServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
@@ -29,19 +28,25 @@ public class ThreadPooledServer implements Runnable{
     protected ExecutorService threadPool;
     protected ExecutorService gamePool;
 
-
     private ArrayList<Player> queue = new ArrayList<>();
     private ArrayList<Player> players = new ArrayList<>();
     private ArrayList<Game> activeGames = new ArrayList<>();
 
+    List<Player> unrankedqueue = new ArrayList<>();
     //Ranked Divisions
     List<Player> thirddiv = new ArrayList<>();
     List<Player> seconddiv = new ArrayList<>();
     List<Player> firstdiv = new ArrayList<>();
 
+    //Auxiliary Lists (In order to avoid concurrent modification)
+    List<Player> removePlayers = new ArrayList<>();
+
+
     public ThreadPooledServer(int port){
         this.serverPort = port;
     }
+
+    //TODO IMPLEMENT WAITING TIME BEFORE MATCHING PLAYER WITH LOWER DIVISION PLAYERS
 
     public void run(){
         synchronized(this){
@@ -66,7 +71,6 @@ public class ThreadPooledServer implements Runnable{
                 this.threadPool.execute(
                         new ClientHandler(clientSocket, this.queue, this.players));
 
-                System.out.println("QUEUE: " + queue.size());
                 System.out.println("Active Count: " + Thread.activeCount());
             } catch(SocketTimeoutException e){
 
@@ -108,205 +112,184 @@ public class ThreadPooledServer implements Runnable{
     }
 
     private synchronized void checkGameStart() {
-        /*for( Player player : queue){
-            System.out.println("Player Q: " + player.getUsername());
-        }*/
-
-        //TODO Start Game Depending on the selected game mode
-        //TODO Add a Delay waiting for same ranked players to join before starting the match
 
         List<Player> gamePlayers = new ArrayList<>();
 
         if(queue.size() >= MAX_PLAYERS && activeGames.size() < MAX_GAMES) {
 
+            //Split players by Rank
             for(Player player : queue){
-
                 if(player.getGamemode() == 0){
-                    gamePlayers.add(player);
+                    updateUnrankedqueue(player);
                 }
-
                 if(player.getGamemode() == 1){
                     splitPlayersByRanking(player);
-
-                    //If there is enough players in each division start the ranked match with only players of that division
-                    if(thirddiv.size() >= MAX_PLAYERS){
-                        gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
-                    }
-
-                    if(seconddiv.size() >= MAX_PLAYERS){
-                        gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
-                    }
-
-                    if(firstdiv.size() >= MAX_PLAYERS){
-                        gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
-                    }
-
-                    if(thirddiv.size() < MAX_PLAYERS){
-                        if((this.thirddiv.size() + this.seconddiv.size()) >= MAX_PLAYERS){
-                            //Add players to the game
-
-                            int cntr = 0;
-
-                            for(Player p : thirddiv){
-                                gamePlayers.add(p);
-                            }
-
-                            cntr += this.thirddiv.size();
-
-                            System.out.print("Tive que ir buscar a outra div (Terceira -> Segunda)");
-
-                            for(Player p1 : seconddiv){
-                                if(cntr > MAX_PLAYERS){
-                                    break;
-                                }
-
-                                gamePlayers.add(p1);
-                                cntr++;
-                            }
-                        }
-                        else if((this.thirddiv.size() + this.seconddiv.size() + this.firstdiv.size()) >= MAX_PLAYERS){
-                            int cntr = 0;
-
-                            for(Player p : thirddiv){
-                                gamePlayers.add(p);
-                            }
-
-                            cntr += this.thirddiv.size();
-
-                            for(Player p1 : seconddiv){
-                                gamePlayers.add(p1);
-                            }
-
-                            cntr += this.seconddiv.size();
-
-                            for(Player p2 : firstdiv){
-                                if(cntr > MAX_PLAYERS){
-                                    break;
-                                }
-
-                                gamePlayers.add(p2);
-                                cntr++;
-                            }
-
-                        }
-                        else{
-                            //TODO DO SOMETHING WHEN THERE ARE NOT ENOUGH PLAYERS TO START A RANKED MATCH
-                            System.out.println("Not enough Ranked Players Connected to start a ranked game");
-                        }
-                    }
-
-                    if(seconddiv.size() < MAX_PLAYERS){
-                        if((this.seconddiv.size() + this.thirddiv.size()) >= MAX_PLAYERS){
-
-                            int cntr = 0;
-
-                            for(Player p : seconddiv){
-                                gamePlayers.add(p);
-                            }
-
-                            cntr += this.thirddiv.size();
-
-                            for(Player p1 : thirddiv){
-                                if(cntr > MAX_PLAYERS){
-                                    break;
-                                }
-
-                                gamePlayers.add(p1);
-                                cntr++;
-                            }
-
-                            System.out.print("Tive que ir buscar a outra div (Segunda -> Terceira)");
-
-
-                        }
-                        else if((this.thirddiv.size() + this.seconddiv.size() + this.firstdiv.size()) >= MAX_PLAYERS){
-                            int cntr = 0;
-
-                            for(Player p : thirddiv){
-                                gamePlayers.add(p);
-                            }
-
-                            cntr += this.thirddiv.size();
-
-                            for(Player p1 : seconddiv){
-                                gamePlayers.add(p1);
-                            }
-
-                            cntr += this.seconddiv.size();
-
-                            for(Player p2 : firstdiv){
-                                if(cntr > MAX_PLAYERS){
-                                    break;
-                                }
-
-                                gamePlayers.add(p2);
-                                cntr++;
-                            }
-                        }
-                        else{
-                            //TODO DO SOMETHING WHEN THERE ARE NOT ENOUGH PLAYERS TO START A RANKED MATCH
-                            System.out.println("Not enough Ranked Players Connected to start a ranked game");
-                        }
-                    }
-
-                    if(firstdiv.size() < MAX_PLAYERS){
-                        if((this.firstdiv.size() + this.seconddiv.size()) >= MAX_PLAYERS){
-                            if((this.seconddiv.size() + this.thirddiv.size()) >= MAX_PLAYERS){
-
-                                int cntr = 0;
-
-                                for(Player p : firstdiv){
-                                    gamePlayers.add(p);
-                                }
-
-                                cntr += this.firstdiv.size();
-
-                                for(Player p1 : seconddiv){
-                                    if(cntr > MAX_PLAYERS){
-                                        break;
-                                    }
-
-                                    gamePlayers.add(p1);
-                                    cntr++;
-                                }
-
-                            }
-                        }
-                        else if((this.thirddiv.size() + this.seconddiv.size() + this.firstdiv.size()) >= MAX_PLAYERS){
-                            int cntr = 0;
-
-                            for(Player p : thirddiv){
-                                gamePlayers.add(p);
-                            }
-
-                            cntr += this.thirddiv.size();
-
-                            for(Player p1 : seconddiv){
-                                gamePlayers.add(p1);
-                            }
-
-                            cntr += this.seconddiv.size();
-
-                            for(Player p2 : firstdiv){
-                                if(cntr > MAX_PLAYERS){
-                                    break;
-                                }
-
-                                gamePlayers.add(p2);
-                                cntr++;
-                            }
-                        }
-                        else{
-                            //TODO DO SOMETHING WHEN THERE ARE NOT ENOUGH PLAYERS TO START A RANKED MATCH
-                            System.out.println("Not enough Ranked Players Connected to start a ranked game");
-                        }
-                    }
-
                 }
+            }
+
+            //Removes Players added to the unranked queue from the queue
+            updateQueue(removePlayers, queue);
+            removePlayers.clear();
+
+            //Starts Unranked Games
+            if(unrankedqueue.size() >= MAX_PLAYERS){
+                gamePlayers = new ArrayList<>(unrankedqueue.subList(0, MAX_PLAYERS));
+                unrankedqueue.subList(0, MAX_PLAYERS).clear();
+
+                System.out.println("LAUNCHING UNRANKED MATCH");
+                printQueueServerLogs();
+            }
+
+            /// ---- RANKED PLAY RELATED ---- ///
+
+            //If there is enough players in each division start the ranked match with only players of that division
+            if(thirddiv.size() >= MAX_PLAYERS){
+                gamePlayers = new ArrayList<>(thirddiv.subList(0, MAX_PLAYERS));
+
+                //Removes gamePlayers from the division queue as well as the connection queue
+                thirddiv.subList(0, MAX_PLAYERS).clear();
+                updateQueue(gamePlayers, queue);
+
+                System.out.println("LAUNCHING THIRD DIV (ONLY) RANKED MATCH");
+                printQueueServerLogs();
 
             }
 
+            if(seconddiv.size() >= MAX_PLAYERS){
 
+                gamePlayers = new ArrayList<>(seconddiv.subList(0, MAX_PLAYERS));
+
+                //Removes gamePlayers from the division queue as well as the connection queue
+                seconddiv.subList(0, MAX_PLAYERS).clear();
+                updateQueue(gamePlayers, queue);
+
+                System.out.println("LAUNCHING SECOND DIV (ONLY) RANKED MATCH");
+                printQueueServerLogs();
+
+            }
+
+            if(firstdiv.size() >= MAX_PLAYERS){
+
+                gamePlayers = new ArrayList<>(firstdiv.subList(0, MAX_PLAYERS));
+
+                //Removes gamePlayers from the division queue as well as the connection queue
+                firstdiv.subList(0, MAX_PLAYERS).clear();
+                updateQueue(gamePlayers, queue);
+
+                System.out.println("LAUNCHING FIRST DIV (ONLY) RANKED MATCH");
+                printQueueServerLogs();
+
+            }
+
+            // Not enough players in the same division, so divisions have to be mixed
+            if(firstdiv.size() + seconddiv.size() >= MAX_PLAYERS){
+
+                int cntr = firstdiv.size();
+
+                for(Player p : firstdiv){
+                    gamePlayers.add(p);
+                    removePlayers.add(p);
+                }
+
+                //Removes gamePlayers from the division queue as well as the connection queue
+                updateQueue(removePlayers, firstdiv);
+                updateQueue(removePlayers, queue);
+                removePlayers.clear();
+
+                for(Player p2 : seconddiv){
+                    if(cntr > MAX_PLAYERS)
+                        break;
+
+                    gamePlayers.add(p2);
+                    removePlayers.add(p2);
+                    cntr++;
+                }
+
+                updateQueue(removePlayers, seconddiv);
+                updateQueue(removePlayers, queue);
+                removePlayers.clear();
+
+                System.out.println("LAUNCHING FIRST DIV + SECOND DIV RANKED MATCH");
+                printQueueServerLogs();
+
+            }
+            else if(seconddiv.size() + thirddiv.size() >= MAX_PLAYERS){
+
+                int cntr = seconddiv.size();
+
+                for(Player p : seconddiv){
+                    gamePlayers.add(p);
+                    removePlayers.add(p);
+                }
+
+                //Removes gamePlayers from the division queue as well as the connection queue
+                updateQueue(removePlayers, seconddiv);
+                updateQueue(removePlayers, queue);
+                removePlayers.clear();
+
+                for(Player p2 : thirddiv){
+                    if(cntr > MAX_PLAYERS)
+                        break;
+
+                    gamePlayers.add(p2);
+                    removePlayers.add(p2);
+                    cntr++;
+                }
+
+                updateQueue(removePlayers, thirddiv);
+                updateQueue(removePlayers, queue);
+                removePlayers.clear();
+
+                System.out.println("LAUNCHING SECOND DIV + THIRD DIV RANKED MATCH");
+                printQueueServerLogs();
+
+            }
+            else if(firstdiv.size() + thirddiv.size() + seconddiv.size() >= MAX_PLAYERS){
+
+                int cntr = firstdiv.size();
+
+                for(Player p : firstdiv){
+                    gamePlayers.add(p);
+                    removePlayers.add(p);
+                }
+
+                updateQueue(removePlayers, firstdiv);
+                updateQueue(removePlayers, queue);
+                removePlayers.clear();
+
+                cntr += seconddiv.size();
+
+                for(Player p2 : seconddiv){
+                    gamePlayers.add(p2);
+                    removePlayers.add(p2);
+                }
+
+                updateQueue(removePlayers, seconddiv);
+                updateQueue(removePlayers, queue);
+                removePlayers.clear();
+
+                for(Player p3 : thirddiv){
+                    if(cntr > MAX_PLAYERS)
+                        break;
+
+                    gamePlayers.add(p3);
+                    removePlayers.add(p3);
+                }
+
+                updateQueue(removePlayers, thirddiv);
+                updateQueue(removePlayers, queue);
+                removePlayers.clear();
+
+                System.out.println("LAUNCHING FIRST DIV + SECOND DIV + THIRD DIV RANKED MATCH");
+                printQueueServerLogs();
+
+            }
+            else{
+                System.out.println("Not enough Players to start a ranked match! Waiting for a few more to join");
+            }
+
+
+            //Start game
             Game game = new Game(gamePlayers);
             activeGames.add(game);
 
@@ -382,6 +365,26 @@ public class ThreadPooledServer implements Runnable{
             firstdiv.add(player);
         }
 
+    }
+
+    public void updateQueue(List<Player> players, List<Player> updatequeue){
+        for(Player player: players){
+            updatequeue.remove(player);
+        }
+    }
+
+    public void updateUnrankedqueue(Player player){
+        unrankedqueue.add(player);
+        removePlayers.add(player);
+    }
+
+    public void printQueueServerLogs(){
+        System.out.println("QUEUE LIST STAUS" + queue.size());
+        System.out.println("QUEUE: " + queue.size());
+        System.out.println("UNRANKED QUEUE: " + queue.size());
+        System.out.println("THIRD DIV QUEUE: "  + thirddiv.size());
+        System.out.println("SECOND DIV QUEUE: " + seconddiv.size());
+        System.out.println("FIRST DIV QUEUE: " + firstdiv.size());
     }
 
 }
