@@ -76,7 +76,7 @@ public class Game {
 
 
                                 playeroutputStream.println("Question number: " + (i+1));
-                                playeroutputStream.println("Current Points: ");
+                                playeroutputStream.println("Current Points: " + player.getPoints());
                                 this.gamequestions.get(i).print(playeroutputStream);
 
                                 playeroutputStream.println("Please write the answer: ");

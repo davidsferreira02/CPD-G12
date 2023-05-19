@@ -11,6 +11,7 @@ public class Player {
     private String username;
     private String password;
     private String token;
+    private int points;
 
     private long tokenLimit;
     private long timestampQueue;
@@ -23,6 +24,7 @@ public class Player {
         this.username = username;
         this.password = password;
         this.token = "0";
+        this.points=0;
         this.timestampQueue = 0;
         this.rank = 0;
     }
@@ -163,5 +165,15 @@ public class Player {
         } catch (IOException e) {
             System.out.println("An error occurred: " + e.getMessage());
         }
+    }
+    public int getPoints(){
+        return points;
+    }
+
+    public void addPoints(){
+        points ++;
+    }
+    public void removePoints(){
+        points -- ;
     }
 }
