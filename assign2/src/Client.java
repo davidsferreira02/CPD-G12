@@ -42,7 +42,6 @@ public class Client {
         // Send messages to the server
         while (!quit) {
             received = client.serverMessage();
-            System.out.println(received);
 
             //handle login
             if(received.equals("LOGIN")){

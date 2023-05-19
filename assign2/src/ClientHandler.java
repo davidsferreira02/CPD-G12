@@ -47,9 +47,6 @@ public class ClientHandler implements Runnable{
                 if(!isLoggedIn) {
                     System.out.println("Asking login: " + clientSocket);
                     login();
-                    for(Player player : queue) {
-                        System.out.println(player.getUsername() + ":" + player.getTimestampQueue());
-                    }
                 }
                 /*else {
 
