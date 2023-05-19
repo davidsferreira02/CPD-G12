@@ -111,6 +111,7 @@ public class ClientHandler implements Runnable{
                 }
             }
         }
+        outputStream.println("AUTHFAIL");
 
         //require Login
         outputStream.println("LOGIN");

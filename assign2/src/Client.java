@@ -42,6 +42,7 @@ public class Client {
         // Send messages to the server
         while (!quit) {
             received = client.serverMessage();
+            System.out.println(received);
 
             //handle login
             if(received.equals("LOGIN")){
@@ -160,8 +161,12 @@ public class Client {
     }
     public void auth() {
         out.println(token);
-        if(serverMessage().equals("AUTHOK"))
+        String message = serverMessage();
+        if(message.equals("AUTHOK"))
             System.out.println("Auth Token Successful");
+        else {
+            System.out.println("Auth Token Failed");
+        }
     }
 
     public static String handleInputTimeout() {
