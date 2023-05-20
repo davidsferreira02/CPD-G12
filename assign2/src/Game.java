@@ -60,12 +60,29 @@ public class Game {
                     BufferedReader playerinputStream = player.getInputStream();
 
                     playeroutputStream.println("GAME");
+                    String input = "";
+                    try {
+                        player.getSocket().setSoTimeout(1);
+                        input = playerinputStream.readLine();
+                        player.getSocket().setSoTimeout(0);
+                    } catch (SocketException e) {
 
-                    String input = playerinputStream.readLine();
+                    }
 
                     if (input.toUpperCase().equals("PLAY")) {
                         this.state = "GAME";
                     }
+
+                    playeroutputStream.println("\nWelcome to the Game!" +
+                            "\n\n Rules: " +
+                            "\n\t Answer questions with the respective number!"+
+                            "\n\t You only have 5 seconds to answer!" +
+                            "\n\t Each correct answer gives you 1 point" +
+                            "\n\t First place wins 2 points, Second 1 point, Third 0 points, Other -1" +
+                            "\n\n\nGame is Stating! Good Luck!");
+
+                    wait(10);
+
 
                 }
 
@@ -141,7 +158,7 @@ public class Game {
                     StringBuilder leaderboardBuilder = new StringBuilder();
                     leaderboardBuilder.append("\n---------- LeaderBoard ----------\n");
                     for(int i = 0; i  < players.size(); i++) {
-                        leaderboardBuilder.append(i).append(": ")
+                        leaderboardBuilder.append(i+1).append(": ")
                                 .append(players.get(i).getUsername())
                                 .append(" - ").append("Points: ")
                                 .append(players.get(i).getPoints()).append("\n");
@@ -162,6 +179,8 @@ public class Game {
                         playeroutputStream.println(leaderBoard);
                         playeroutputStream.println("Your new rank is: " + player.getRank());
                         playeroutputStream.println("Thanks for playing !");
+
+                        wait(10);
 
                         //reset player queue time to now
                         player.setTimestampQueue(Instant.now().getEpochSecond());

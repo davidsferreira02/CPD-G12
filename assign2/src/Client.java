@@ -1,7 +1,5 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Client {
@@ -21,16 +19,49 @@ public class Client {
     public boolean isLoggedIn = false;
 
     private String token = "0";
+    public boolean failedConnection = false;
 
-    public Client() throws IOException {
-        socket =  new Socket(SERVER_ADDRESS, SERVER_PORT);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
+    public Client() {
+        boolean retry = true;
+        int retries = 0;
+        int maxRetries = 5;
+        while(retry){
+            try {
+                socket =  new Socket(SERVER_ADDRESS, SERVER_PORT);
+                retry = false;
+            } catch (IOException e) {
+
+                retries++;
+                System.out.println("[" + retries + "/" + maxRetries +  "] Cannot connect to Server. Is Server up? Waiting 5 seconds to retry again!");
+                if( retries == maxRetries){
+                    System.out.println("Max Connection Retries Exceeded. Is Server up?");
+                    retry = false;
+                    failedConnection = true;
+                    return;
+                }
+                wait(5);
+            }
+        }
+
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            out = new PrintWriter(socket.getOutputStream(), true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) throws IOException {
 
         Client client = new Client();
+
+        if(client.failedConnection)
+            return;
+
         client.loadToken();
 
 
@@ -45,7 +76,7 @@ public class Client {
         while (!quit) {
             received = client.serverMessage();
             if (received == null){
-                continue;
+                quit = true;
             }
             //handle login
             else if(received.equals("LOGIN")){
@@ -56,11 +87,7 @@ public class Client {
             } else if (received.equals("CHECKALIVE")) {
                 client.out.println("ALIVE");
             }
-            /*else if(received.equals("INPUT")){
-                Scanner scanner = new Scanner(System.in);
-                String input = scanner.nextLine();
-                client.out.println(input);
-            }*/
+
             else if(received.equals("GAME")) {
                 client.out.println("PLAY");
                 answers = new StringBuilder();
@@ -172,47 +199,6 @@ public class Client {
         }
     }
 
-    /*public static String handleInputTimeout() {
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Please write answer number: ");
-
-        Thread inputThread = new Thread(() -> {
-            synchronized (lock) {
-                if (scanner.hasNextLine()) {
-                    userInput = scanner.nextLine();
-                    lock.notifyAll();
-                }
-            }
-        });
-
-        inputThread.start();
-
-        synchronized (lock) {
-            try {
-                lock.wait(5000); // Wait for 20 seconds or until notified
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        inputThread.interrupt();
-        System.out.println("Input: " + userInput);
-        if (userInput != null) { // handle input
-            if (userInput.length() == 1 && Character.isDigit(userInput.charAt(0))){
-                scanner.close();
-                return userInput;
-            }
-            else{
-                scanner.close();
-                return "E";
-            }
-        } else { //handle timeout
-            scanner.close();
-            return "T";
-        }
-
-    }*/
-
     public static String getInputWithTimeout(int timeoutSeconds) {
         final StringBuilder userInput = new StringBuilder(); // StringBuilder to hold the input
         System.out.print("\nPlease write answer number: ");
@@ -262,6 +248,7 @@ public class Client {
                     return "E";
                 }
             } else { // handle timeout
+                System.out.println("No Answer! Remember you only have 5 seconds to answer!");
                 return "T";
             }
         }
@@ -280,6 +267,18 @@ public class Client {
         }
 
         return message;
+    }
+
+    public void wait(int seconds)
+    {
+        try
+        {
+            Thread.sleep(seconds*1000);
+        }
+        catch(InterruptedException ex)
+        {
+            Thread.currentThread().interrupt();
+        }
     }
 
 }

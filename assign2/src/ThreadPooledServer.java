@@ -65,8 +65,6 @@ public class ThreadPooledServer implements Runnable{
                 this.threadPool.execute(
                         new ClientHandler(clientSocket, this.queue, this.players, lock));
 
-                System.out.println("[SERVER] QUEUE: " + queue.size());
-                System.out.println("[SERVER] Active Count: " + Thread.activeCount());
             } catch(SocketTimeoutException e){
 
             } catch (IOException e) {
@@ -115,6 +113,8 @@ public class ThreadPooledServer implements Runnable{
 
             //lock to protect queue and players
             lock.lock();
+            System.out.println("[SERVER] QUEUE: " + queue.size());
+            System.out.println("[SERVER] Active Games: " + activeGames.size());
 
             System.out.println("\n-------------- Queue --------------\n");
             for (Player player : queue) {
