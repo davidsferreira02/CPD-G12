@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public class ClientHandler implements Runnable{
@@ -27,12 +28,9 @@ public class ClientHandler implements Runnable{
     private long startTime;
     private long nextTime;
 
-    private  Object lock;
+    private ReentrantLock lock;
 
-    //TODO IF GAME IS FULL PROBABLY CREATE A WAITING ROOM/LOBBY
-
-
-    public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> players, Object lock) {
+    public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> players, ReentrantLock lock) {
         this.clientSocket = clientSocket;
         this.queue   = queue;
         this.players = players;
@@ -51,8 +49,8 @@ public class ClientHandler implements Runnable{
 
             String receivedMessage;
 
-            //TODO HANDLE isStopped!
             while(!isStopped){
+                lock.lock();
                 clientSocket.setSoTimeout(0);
                 if(!isLoggedIn) {
                     System.out.println("Asking login: " + clientSocket);
@@ -86,17 +84,7 @@ public class ClientHandler implements Runnable{
                     addToQueue(player);
                     player.setStatusQueue();
                 }
-
-                /*else {
-
-                    if(this.queue.size() >= Game.getNumberPlayers()){
-                        startGame();
-                    }
-                    else{
-                        //TODO ADD A WAITING PLAYERS LOBBY/MESSAGE
-                    }
-
-                }*/
+                lock.unlock();
             }
 
 
@@ -182,6 +170,7 @@ public class ClientHandler implements Runnable{
                     addToQueue(player);
                     startTime = Instant.now().getEpochSecond();
                     nextTime = Instant.now().getEpochSecond();
+                    player.setSocket(clientSocket);
                     player.setInputStream(inputStream);
                     player.setOutputStream(outputStream);
                     return;
@@ -212,7 +201,7 @@ public class ClientHandler implements Runnable{
         queue.sort(Comparator.comparingLong(Player::getTimestampQueue));
     }
 
-    public String askClientInput() {
+    public synchronized String askClientInput() {
         String input = null;
         //inputStream
         try {
@@ -230,7 +219,7 @@ public class ClientHandler implements Runnable{
         return input;
     }
 
-    public String clientMessage() {
+    public synchronized String clientMessage() {
         String message = null;
         //inputStream
         try {
@@ -245,7 +234,7 @@ public class ClientHandler implements Runnable{
         return message;
     }
 
-    public void stop() {
+    public synchronized void stop() {
         isStopped = true;
     }
 

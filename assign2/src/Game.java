@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Game {
 
@@ -17,7 +18,8 @@ public class Game {
     private ArrayList<Question> gamequestions;
     private int gamequestionnumber = 5;
 
-    private Object lock;
+    private ReentrantLock lock;
+
 
     private boolean quit = false;
 
@@ -34,20 +36,17 @@ public class Game {
         //TODO ADD MORE STUFF SURELY (THIS IS A SIMPLE MOCKUP)
     }
 
-    public static int getNumberPlayers() {
-        return numberPlayers;
-    }
 
     public int run() throws IOException {
 
-        /*gameinstances += 1;
-
-        if(gameinstances > maxgameinstances){
-            System.out.println("NUMBER OF GAME INSTANCES IS BIGGER THAN ITS MAXIMUM AMMOUNT");
-        }*/
-
         loadQuestions();
         selectRandomQuestions();
+        System.out.println("\n\n-------------- Game --------------\n");
+        for (Player player : players) {
+            player.setStatusGame();
+            System.out.println("\nUsername:  " + player.getUsername() + "Rank: " + player.getRank());
+        }
+        System.out.println("\n\n----------------------------------\n");
 
         while(!quit) {
 
@@ -87,32 +86,14 @@ public class Game {
 
                             for(Player player : this.players){
                                 PrintWriter playeroutputStream = player.getOutputStream();
-//                                BufferedReader playerinputStream = player.getInputStream();
 
-                                //check if player alive
-
-
-//                                playeroutputStream.println("Current Points: " + player.getPoints());
                                 playeroutputStream.println("\nQuestion number: " + (i+1));
 
                                 this.gamequestions.get(i).print(playeroutputStream);
 
-                                //playeroutputStream.println("Please write the answer: ");
                                 //Ask for player input
                                 playeroutputStream.println("INPUT");
 
-//                                String playeranswer = playerinputStream.readLine();
-
-
-
-//                                if(rightanswer.toUpperCase().equals(playeranswer.toUpperCase())){
-//                                    playeroutputStream.println("Your answer is correct");
-//                                }
-//                                else{
-//                                    playeroutputStream.println("Your answer is wrong");
-//                                }
-
-//                                playeroutputStream.println("Correct answer was: " + rightanswer);
                             }
                             wait(10);
 
@@ -152,7 +133,6 @@ public class Game {
                         return -1;
                     }
                 } else if (this.state == "ENDGAME") {
-                    //TODO ADD PLAYER LEADERBOARD AT THE END
 
                     //order playerlist by points descending
                     players.sort(Comparator.comparingInt(Player::getPoints).reversed());
@@ -250,7 +230,7 @@ public class Game {
         scanner.close();
     }
 
-    public void setLockObject(Object lock) {
+    public void setLockObject(ReentrantLock lock) {
         this.lock = lock;
     }
 

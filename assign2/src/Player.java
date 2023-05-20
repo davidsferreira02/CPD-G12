@@ -35,15 +35,15 @@ public class Player {
         this.rank = 0;
     }
 
-    public int getRank() {
+    public synchronized int getRank() {
         return rank;
     }
 
-    public void setRank(int rank) {
+    public synchronized void setRank(int rank) {
         this.rank = rank;
     }
 
-    public void updateRank(int rank) {
+    public synchronized void updateRank(int rank) {
         this.rank += rank;
         if(this.rank < 0)
             this.rank = 0;
@@ -51,31 +51,31 @@ public class Player {
             this.rank = 100;
     }
 
-    public String getUsername() {
+    public synchronized String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
+    public synchronized void setUsername(String username) {
         this.username = username;
     }
 
-    public String getPassword() {
+    public synchronized String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public synchronized void setPassword(String password) {
         this.password = password;
     }
 
-    public String getToken() {
+    public synchronized String getToken() {
         return token;
     }
 
-    public void setToken(String token) {
+    public synchronized void setToken(String token) {
         this.token = token;
     }
 
-    public void generateToken(int minutes) {
+    public synchronized void generateToken(int minutes) {
         SecureRandom random = new SecureRandom();
         String tokenGen = random.nextLong(1000000, 10000000) + this.username;
 
@@ -103,27 +103,27 @@ public class Player {
         this.tokenLimit = Instant.now().plus(minutes, ChronoUnit.MINUTES).getEpochSecond();
     }
 
-    public long getTimestampQueue() {
+    public synchronized long getTimestampQueue() {
         return timestampQueue;
     }
 
-    public void setTimestampQueue(long timestampQueue) {
+    public synchronized void setTimestampQueue(long timestampQueue) {
         this.timestampQueue = timestampQueue;
     }
 
-    public void generateTimestampQueue() {
+    public synchronized void generateTimestampQueue() {
         this.timestampQueue = Instant.now().getEpochSecond();
     }
 
-    public long getTokenLimit() {
+    public synchronized long getTokenLimit() {
         return tokenLimit;
     }
 
-    public void setTokenLimit(long tokenLimit) {
+    public synchronized void setTokenLimit(long tokenLimit) {
         this.tokenLimit = tokenLimit;
     }
 
-    public void printPlayer() {
+    public synchronized void printPlayer() {
         System.out.println("Username: " + this.username);
         System.out.println("Password: " + this.password);
         System.out.println("Rank: " + this.rank);
@@ -132,26 +132,26 @@ public class Player {
         System.out.println("TimestampQueue: " + this.timestampQueue);
     }
 
-    public Socket getSocket() {
+    public synchronized Socket getSocket() {
         return socket;
     }
 
-    public void setSocket(Socket socket) {
+    public synchronized void setSocket(Socket socket) {
         this.socket = socket;
     }
-    public BufferedReader getInputStream() {
+    public synchronized BufferedReader getInputStream() {
         return inputStream;
     }
 
-    public void setInputStream(BufferedReader inputStream) {
+    public synchronized void setInputStream(BufferedReader inputStream) {
         this.inputStream = inputStream;
     }
 
-    public PrintWriter getOutputStream() {
+    public synchronized PrintWriter getOutputStream() {
         return outputStream;
     }
 
-    public void setOutputStream(PrintWriter outputStream) {
+    public synchronized void setOutputStream(PrintWriter outputStream) {
         this.outputStream = outputStream;
     }
 
@@ -179,50 +179,50 @@ public class Player {
             System.out.println("An error occurred: " + e.getMessage());
         }
     }
-    public int getPoints(){
+    public synchronized int getPoints(){
         return points;
     }
 
-    public void addPoints(){
+    public synchronized void addPoints(){
         points ++;
     }
-    public void removePoints(){
+    public synchronized void removePoints(){
         points -- ;
     }
 
-    public void resetPoints() {
+    public synchronized void resetPoints() {
         this.points = 0;
     }
 
-    public void setStatusQueue() {
+    public synchronized void setStatusQueue() {
         this.status = "QUEUE";
     }
-    public void setStatusGame() {
+    public synchronized void setStatusGame() {
         this.status = "GAME";
     }
-    public void setStatusLogin() {
+    public synchronized void setStatusLogin() {
         this.status = "LOGIN";
     }
 
-    public void setStatusAddQueue() {
+    public synchronized void setStatusAddQueue() {
         this.status = "ADDQUEUE";
     }
 
-    public void setStatusAlive() {
+    public synchronized void setStatusAlive() {
         this.status = "CHECKALIVE";
     }
-    public void setConnnectionDEAD() {
+    public synchronized void setConnnectionDEAD() {
         this.connectionStatus = "DEAD";
     }
-    public void setConnnectionALIVE() {
+    public synchronized void setConnnectionALIVE() {
         this.connectionStatus = "ALIVE";
     }
 
-    public String getConnectionStatus() {
+    public synchronized String getConnectionStatus() {
         return this.connectionStatus;
     }
 
-    public String getStatus() {
+    public synchronized String getStatus() {
         return this.status;
     }
 

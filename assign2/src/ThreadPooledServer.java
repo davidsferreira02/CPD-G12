@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -10,9 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ThreadPooledServer implements Runnable{
 
@@ -32,7 +35,8 @@ public class ThreadPooledServer implements Runnable{
     private ArrayList<Player> queue = new ArrayList<>();
     private ArrayList<Player> players = new ArrayList<>();
     private ArrayList<Game> activeGames = new ArrayList<>();
-    private static final Object lock = new Object();
+    private ReentrantLock lock = new ReentrantLock();
+
 
     public ThreadPooledServer(int port){
         this.serverPort = port;
@@ -103,38 +107,48 @@ public class ThreadPooledServer implements Runnable{
     }
 
     private synchronized void checkGameStart() {
-        /*for( Player player : queue){
-            System.out.println("Player Q: " + player.getUsername());
-        }*/
-        for( Player player : queue) {
-            if(player.getConnectionStatus().equals("DEAD"))
-                System.out.println(player.getUsername() + "DEAD");
-            System.out.println(player.getUsername() + ":" + (Instant.now().getEpochSecond() - player.getTimestampQueue())/60 + " Minutes");
-        }
-        System.out.print("\n[CHECKGAMESTART] ");
-        //TODO Fix this active games and all
-        if(queue.size() >= MAX_PLAYERS && activeGames.size() <= MAX_GAMES) {
-            List<Player> gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
-            queue.subList(0, MAX_PLAYERS).clear();
-            Game game = new Game(gamePlayers);
-            activeGames.add(game);
-            System.out.println("Starting game: ");
-            for(Player player : gamePlayers) {
-                player.setStatusGame();
-                System.out.println("\t" + player.getUsername());
+        //user lock to protect concurrency in queue and players ArrayLists
+
+        try {
+            //verify if all players all still in queue - remove disconnected
+            checkPlayersAlive();
+
+            //lock to protect queue and players
+            lock.lock();
+
+            System.out.println("\n-------------- Queue --------------\n");
+            for (Player player : queue) {
+                System.out.println("User: " + player.getUsername() + " - Waiting: " + (Instant.now().getEpochSecond() - player.getTimestampQueue()) / 60 + " Minutes");
             }
-            gamePool.execute(() -> {
-                try {
-                    game.setLockObject(lock);
-                    game.run();
-                    activeGames.remove(game);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-        else {
-            System.out.print("Not enough players: " + queue.size() + "\n");
+            System.out.println("\n-----------------------------------\n");
+
+            System.out.print("\n[CHECKGAMESTART] ");
+
+            if (queue.size() >= MAX_PLAYERS && activeGames.size() <= MAX_GAMES) {
+                List<Player> gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
+                queue.subList(0, MAX_PLAYERS).clear();
+                Game game = new Game(gamePlayers);
+                activeGames.add(game);
+                if(activeGames.size() >= MAX_GAMES)
+                    System.out.println("Game Server is full, Waiting for Server..");
+
+                //unlock
+                lock.unlock();
+                gamePool.execute(() -> {
+                    try {
+                        game.setLockObject(lock);
+                        game.run();
+                        activeGames.remove(game);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            } else {
+                System.out.print("Not enough players: " + queue.size() + "\n");
+            }
+        } finally {
+            if(lock.isHeldByCurrentThread())
+                lock.unlock();
         }
     }
 
@@ -178,6 +192,29 @@ public class ThreadPooledServer implements Runnable{
             }
         } catch (IOException e) {
             System.out.println("Error reading directory: " + path);
+        }
+    }
+
+    public void checkPlayersAlive(){
+        Iterator<Player> iterator = queue.iterator();
+        while (iterator.hasNext()) {
+            Player player = iterator.next();
+            player.getOutputStream().println("CHECKALIVE");
+            String message;
+            try {
+                player.getSocket().setSoTimeout(1);
+                message = player.getInputStream().readLine();
+            } catch (IOException e) {
+                System.out.println("Player Disconnected: " + player.getUsername());
+                message = null;
+                player.setConnnectionDEAD();
+                iterator.remove();  // Remove the player using the iterator
+            } finally {
+                try {
+                    player.getSocket().setSoTimeout(0);
+                } catch (SocketException e) {
+                }
+            }
         }
     }
 }
