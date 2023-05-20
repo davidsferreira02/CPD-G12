@@ -205,7 +205,7 @@ public class ClientHandler implements Runnable{
         }
         queue.add(player);
         orderQueueByTimeInQueue();
-        player.updateUserFile("assign2/src/players/");
+        updatePlayerFile();
     }
 
     public synchronized void orderQueueByTimeInQueue() {
@@ -247,5 +247,9 @@ public class ClientHandler implements Runnable{
 
     public void stop() {
         isStopped = true;
+    }
+
+    public synchronized void updatePlayerFile() {
+        player.updateUserFile("assign2/src/players/");
     }
 }

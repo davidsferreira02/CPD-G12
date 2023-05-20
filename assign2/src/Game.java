@@ -125,7 +125,6 @@ public class Game {
                                 try {
                                     playerSocket.setSoTimeout(1);
                                     message = player.getInputStream().readLine();
-                                    System.out.println("Answer: " + message);
                                 } catch (SocketException e) {
                                     message = null;
                                 } finally {
@@ -166,6 +165,11 @@ public class Game {
                                 .append(players.get(i).getUsername())
                                 .append(" - ").append("Points: ")
                                 .append(players.get(i).getPoints()).append("\n");
+                        if( 2-i < -1)
+                            players.get(i).updateRank(-1);
+                        else {
+                            players.get(i).updateRank(2-i);
+                        }
                     }
                     leaderboardBuilder.append("--------------------------------- \n");
                     String leaderBoard = leaderboardBuilder.toString();
@@ -176,6 +180,7 @@ public class Game {
                         PrintWriter playeroutputStream = player.getOutputStream();
                         BufferedReader playerinputStream = player.getInputStream();
                         playeroutputStream.println(leaderBoard);
+                        playeroutputStream.println("Your new rank is: " + player.getRank());
                         playeroutputStream.println("Thanks for playing !");
 
                         //reset player queue time to now
@@ -191,8 +196,12 @@ public class Game {
         for(Player player : players) {
             //update player points
             player.resetPoints();
+            //update player rank
+
             //return them to queue
             player.getOutputStream().println("ENDGAME");
+            //add players to queue again.
+            player.setStatusAddQueue();
         }
 
 
