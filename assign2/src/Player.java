@@ -1,4 +1,5 @@
 import java.io.*;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,6 +20,11 @@ public class Player {
     //Socket Variables
     private BufferedReader inputStream;
     private PrintWriter outputStream;
+
+    private Socket socket;
+
+    private String status = "NONE";
+    private String connectionStatus = "NONE";
 
     public Player(String username, String password){
         this.username = username;
@@ -126,6 +132,13 @@ public class Player {
         System.out.println("TimestampQueue: " + this.timestampQueue);
     }
 
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
     public BufferedReader getInputStream() {
         return inputStream;
     }
@@ -176,4 +189,41 @@ public class Player {
     public void removePoints(){
         points -- ;
     }
+
+    public void resetPoints() {
+        this.points = 0;
+    }
+
+    public void setStatusQueue() {
+        this.status = "QUEUE";
+    }
+    public void setStatusGame() {
+        this.status = "GAME";
+    }
+    public void setStatusLogin() {
+        this.status = "LOGIN";
+    }
+
+    public void setStatusAddQueue() {
+        this.status = "ADDQUEUE";
+    }
+
+    public void setStatusAlive() {
+        this.status = "CHECKALIVE";
+    }
+    public void setConnnectionDEAD() {
+        this.connectionStatus = "DEAD";
+    }
+    public void setConnnectionALIVE() {
+        this.connectionStatus = "ALIVE";
+    }
+
+    public String getConnectionStatus() {
+        return this.connectionStatus;
+    }
+
+    public String getStatus() {
+        return this.status;
+    }
+
 }

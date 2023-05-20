@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,13 +22,21 @@ public class ClientHandler implements Runnable{
 
     boolean isStopped = false;
 
+    private Player player;
+
+    private long startTime;
+    private long nextTime;
+
+    private  Object lock;
+
     //TODO IF GAME IS FULL PROBABLY CREATE A WAITING ROOM/LOBBY
 
 
-    public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> players) {
+    public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> players, Object lock) {
         this.clientSocket = clientSocket;
         this.queue   = queue;
         this.players = players;
+        this.lock = lock;
     }
 
     public void run() {
@@ -44,10 +53,40 @@ public class ClientHandler implements Runnable{
 
             //TODO HANDLE isStopped!
             while(!isStopped){
+                clientSocket.setSoTimeout(0);
                 if(!isLoggedIn) {
                     System.out.println("Asking login: " + clientSocket);
                     login();
                 }
+                else if(player.getStatus().equals("QUEUE")) {
+                    if(nextTime == Instant.now().getEpochSecond()){
+                        outputStream.println("In queue...");
+                        nextTime = Instant.now().plusSeconds(5).getEpochSecond();
+                    }
+                }
+                else if(player.getStatus().equals("CHECKALIVE")){
+                    outputStream.println("CHECKALIVE");
+                    String message = clientMessage();
+                    if(message == null){
+                        player.setConnnectionDEAD();
+                        stop();
+                    }
+                    else if(message.equals("ALIVE")) {
+                        player.setConnnectionALIVE();
+                    }
+                    else {
+                        player.setConnnectionDEAD();
+                    }
+
+                }
+                else if(player.getStatus().equals("GAME")) {
+
+                }
+                else if(player.getStatus().equals("ADDQUEUE")) {
+                    addToQueue(player);
+                    player.setStatusQueue();
+                }
+
                 /*else {
 
                     if(this.queue.size() >= Game.getNumberPlayers()){
@@ -96,12 +135,16 @@ public class ClientHandler implements Runnable{
         if(!token.equals("0")) {
             for(Player player : players) {
                 if(player.getToken().equals(token)) {
-
+                    this.player = player;
                     validToken = true;
                     isLoggedIn = true;
                     System.out.println("[AUTH] LOGIN TOKEN SUCCESS: " + player.getUsername());
                     outputStream.println("AUTHOK");
+                    player.setStatusQueue();
                     addToQueue(player);
+                    startTime = Instant.now().getEpochSecond();
+                    nextTime = Instant.now().getEpochSecond();
+                    player.setSocket(clientSocket);
                     player.setInputStream(inputStream);
                     player.setOutputStream(outputStream);
                     return;
@@ -128,13 +171,17 @@ public class ClientHandler implements Runnable{
             if(username.equals(player.getUsername())){
                 //Check password
                 if(password.equals(player.getPassword())) {
+                    this.player = player;
                     isLoggedIn = true;
                     System.out.println("LOGIN SUCCESS: " + username);
                     outputStream.println("LOGINOK");
                     //send token
                     player.generateToken(60);
                     outputStream.println(player.getToken());
+                    player.setStatusQueue();
                     addToQueue(player);
+                    startTime = Instant.now().getEpochSecond();
+                    nextTime = Instant.now().getEpochSecond();
                     player.setInputStream(inputStream);
                     player.setOutputStream(outputStream);
                     return;
@@ -173,9 +220,29 @@ public class ClientHandler implements Runnable{
             input = inputStream.readLine();
         } catch (IOException e) {
             stop();
+        } finally {
+            try {
+                clientSocket.setSoTimeout(0);
+            } catch (SocketException ignored) {
+            }
         }
 
         return input;
+    }
+
+    public String clientMessage() {
+        String message = null;
+        //inputStream
+        try {
+            clientSocket.setSoTimeout(2000);
+            message = inputStream.readLine();
+        } catch (IOException e) {
+            player.setConnnectionDEAD();
+            queue.remove(player);
+            stop();
+        }
+
+        return message;
     }
 
     public void stop() {

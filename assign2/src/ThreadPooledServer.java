@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 
 public class ThreadPooledServer implements Runnable{
 
-    private static final int MAX_PLAYERS = 2;
+    private static final int MAX_PLAYERS = 1;
     private static final int MAX_QUEUE_PLAYERS = 20;
     private static final int MAX_GAMES = 5;
 
@@ -32,6 +32,7 @@ public class ThreadPooledServer implements Runnable{
     private ArrayList<Player> queue = new ArrayList<>();
     private ArrayList<Player> players = new ArrayList<>();
     private ArrayList<Game> activeGames = new ArrayList<>();
+    private static final Object lock = new Object();
 
     public ThreadPooledServer(int port){
         this.serverPort = port;
@@ -58,7 +59,7 @@ public class ThreadPooledServer implements Runnable{
                 System.out.println("[SERVER] New Connection: " + clientSocket);
                 //waiting for thread pool
                 this.threadPool.execute(
-                        new ClientHandler(clientSocket, this.queue, this.players));
+                        new ClientHandler(clientSocket, this.queue, this.players, lock));
 
                 System.out.println("[SERVER] QUEUE: " + queue.size());
                 System.out.println("[SERVER] Active Count: " + Thread.activeCount());
@@ -106,9 +107,12 @@ public class ThreadPooledServer implements Runnable{
             System.out.println("Player Q: " + player.getUsername());
         }*/
         for( Player player : queue) {
+            if(player.getConnectionStatus().equals("DEAD"))
+                System.out.println(player.getUsername() + "DEAD");
             System.out.println(player.getUsername() + ":" + (Instant.now().getEpochSecond() - player.getTimestampQueue())/60 + " Minutes");
         }
         System.out.print("\n[CHECKGAMESTART] ");
+        //TODO Fix this active games and all
         if(queue.size() >= MAX_PLAYERS && activeGames.size() <= MAX_GAMES) {
             List<Player> gamePlayers = new ArrayList<>(queue.subList(0, MAX_PLAYERS));
             queue.subList(0, MAX_PLAYERS).clear();
@@ -116,10 +120,12 @@ public class ThreadPooledServer implements Runnable{
             activeGames.add(game);
             System.out.println("Starting game: ");
             for(Player player : gamePlayers) {
+                player.setStatusGame();
                 System.out.println("\t" + player.getUsername());
             }
             gamePool.execute(() -> {
                 try {
+                    game.setLockObject(lock);
                     game.run();
                     activeGames.remove(game);
                 } catch (IOException e) {
@@ -160,10 +166,10 @@ public class ThreadPooledServer implements Runnable{
                         player.setToken(token);
                         player.setTokenLimit(tokenLimit);
                         player.setTimestampQueue(timestampQueue);
-                        if(player.getToken().equals("0")) {
+                        /*if(player.getToken().equals("0")) {
                             player.generateToken(60);
                         }
-                        if(player.getTokenLimit() >= Instant.now().getEpochSecond()/60)
+                        if(player.getTokenLimit() >= Instant.now().getEpochSecond()/60)*/
                         players.add(player);
                     } catch (IOException e) {
                         System.out.println("Error reading file: " + fileName);

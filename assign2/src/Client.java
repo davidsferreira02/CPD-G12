@@ -13,8 +13,10 @@ public class Client {
     public BufferedReader in;
     public PrintWriter out;
 
-    private static String userInput = null;
+//    private static String userInput = null;
     private static final Object lock = new Object();
+    private static boolean inputReceived = false;
+
 
     public boolean isLoggedIn = false;
 
@@ -42,13 +44,17 @@ public class Client {
         // Send messages to the server
         while (!quit) {
             received = client.serverMessage();
-
+            if (received == null){
+                continue;
+            }
             //handle login
-            if(received.equals("LOGIN")){
+            else if(received.equals("LOGIN")){
                 client.login();
             }
             else if (received.equals("AUTH")) {
                 client.auth();
+            } else if (received.equals("CHECKALIVE")) {
+                client.out.println("ALIVE");
             }
             /*else if(received.equals("INPUT")){
                 Scanner scanner = new Scanner(System.in);
@@ -62,15 +68,13 @@ public class Client {
             }
             else if(received.equals("ENDGAME")){
                 inGame = false;
-                //send answers
-                client.out.println(answers);
             }
 
             else{
                 if(inGame) {
                     if(received.equals("INPUT")){
-                        String answer = handleInputTimeout();
-                        answers.append(answer);
+                        String answer = getInputWithTimeout(5);
+                        client.out.println(answer);
                     }
 
                     else {
@@ -168,10 +172,10 @@ public class Client {
         }
     }
 
-    public static String handleInputTimeout() {
+    /*public static String handleInputTimeout() {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Please enter your input within 20 seconds:");
+        System.out.println("Please write answer number: ");
 
         Thread inputThread = new Thread(() -> {
             synchronized (lock) {
@@ -191,7 +195,8 @@ public class Client {
                 e.printStackTrace();
             }
         }
-
+        inputThread.interrupt();
+        System.out.println("Input: " + userInput);
         if (userInput != null) { // handle input
             if (userInput.length() == 1 && Character.isDigit(userInput.charAt(0))){
                 scanner.close();
@@ -206,7 +211,62 @@ public class Client {
             return "T";
         }
 
+    }*/
+
+    public static String getInputWithTimeout(int timeoutSeconds) {
+        final StringBuilder userInput = new StringBuilder(); // StringBuilder to hold the input
+        System.out.print("\nPlease write answer number: ");
+        synchronized (lock) {
+            userInput.setLength(0); // Reset userInput before each invocation
+            inputReceived = false;
+
+            // Create a separate thread to wait for user input
+            Thread inputThread = new Thread(() -> {
+                try {
+                    while (System.in.available() == 0) {
+                        Thread.sleep(100); // Wait until input is available
+                    }
+                    while (System.in.available() > 0) {
+                        userInput.append((char) System.in.read()); // Read input character by character
+                    }
+
+                    synchronized (lock) {
+                        inputReceived = true;
+                        lock.notify();
+                    }
+                } catch (IOException | InterruptedException e) {
+                    // Handle exceptions
+
+                }
+            });
+
+            // Start the input thread
+            inputThread.start();
+
+            // Wait for user input or timeout
+            try {
+                lock.wait(timeoutSeconds * 1000);
+                if (!inputReceived) {
+                    inputThread.interrupt();
+                }
+            } catch (InterruptedException e) {
+                // Handle interruption
+                Thread.currentThread().interrupt();
+            }
+
+            if (inputReceived) { // handle input
+                String inputString = userInput.toString().trim();
+                if (inputString.length() == 1 && Character.isDigit(inputString.charAt(0))) {
+                    return inputString;
+                } else {
+                    return "E";
+                }
+            } else { // handle timeout
+                return "T";
+            }
+        }
     }
+
 
     public String serverMessage() {
         String message = null;

@@ -47,8 +47,10 @@ public class Question {
 
     public void print(PrintWriter outputStream) {
         outputStream.println(question);
+        int i = 0;
         for(String option : options) {
-            outputStream.println(option);
+            outputStream.println(i + ": " + option);
+            i++;
         }
     }
 
