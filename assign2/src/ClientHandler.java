@@ -17,6 +17,10 @@ public class ClientHandler implements Runnable{
     private PrintWriter outputStream;
     private ArrayList<Player> queue;
 
+    private ArrayList<Player> queueDiv1 = new ArrayList<>();
+    private ArrayList<Player> queueDiv2 = new ArrayList<>();
+    private ArrayList<Player> queueDiv3 = new ArrayList<>();
+
     private ArrayList<Player> players;
 
     boolean isLoggedIn = false;
@@ -30,11 +34,17 @@ public class ClientHandler implements Runnable{
 
     private ReentrantLock lock;
 
-    public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> players, ReentrantLock lock) {
+    private int queueType;
+
+    public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> queueDiv1, ArrayList<Player> queueDiv2, ArrayList<Player> queueDiv3, ArrayList<Player> players, ReentrantLock lock, int queueType) {
         this.clientSocket = clientSocket;
         this.queue   = queue;
+        this.queueDiv1 = queueDiv1;
+        this.queueDiv2 = queueDiv2;
+        this.queueDiv3 = queueDiv3;
         this.players = players;
         this.lock = lock;
+        this.queueType = queueType;
     }
 
     public void run() {
@@ -78,6 +88,7 @@ public class ClientHandler implements Runnable{
 
                 }
                 else if(player.getStatus().equals("GAME")) {
+
 
                 }
                 else if(player.getStatus().equals("ADDQUEUE")) {
@@ -190,11 +201,35 @@ public class ClientHandler implements Runnable{
     public synchronized void addToQueue(Player player) {
         if(player.getTimestampQueue() == 0){
             player.generateTimestampQueue();
-            //TODO update userfile
         }
-        queue.add(player);
-        orderQueueByTimeInQueue();
+        player.updateDivision();
+        if(queueType == 0) {
+            queue.add(player);
+            orderQueueByTimeInQueue();
+        }
+        else {
+            splitPlayersByRanking(player);
+        }
         updatePlayerFile();
+    }
+
+    public void splitPlayersByRanking(Player player){
+
+        if(player.getDivision() == 1){
+            //1rd Division
+            queueDiv1.add(player);
+            queueDiv1.sort(Comparator.comparingLong(Player::getTimestampQueue));
+        }
+        else if(player.getDivision() == 2){
+            //2nd Division
+            queueDiv2.add(player);
+            queueDiv2.sort(Comparator.comparingLong(Player::getTimestampQueue));
+        }
+        else{
+            //3st Division
+            queueDiv3.add(player);
+            queueDiv3.sort(Comparator.comparingLong(Player::getTimestampQueue));
+        }
     }
 
     public synchronized void orderQueueByTimeInQueue() {

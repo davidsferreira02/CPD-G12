@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 
 public class Player {
     private int rank;
+    private int division;
     private String username;
     private String password;
     private String token;
@@ -49,6 +50,19 @@ public class Player {
             this.rank = 0;
         else if(this.rank > 100)
             this.rank = 100;
+    }
+
+    public synchronized void updateDivision() {
+        if(rank <= 25)
+            division = 3;
+        else if(rank < 50)
+            division = 2;
+        else
+            division = 1;
+    }
+
+    public synchronized int getDivision() {
+        return division;
     }
 
     public synchronized String getUsername() {
@@ -224,6 +238,10 @@ public class Player {
 
     public synchronized String getStatus() {
         return this.status;
+    }
+
+    public synchronized long getTime() {
+        return (Instant.now().getEpochSecond() - timestampQueue)/60;
     }
 
 }
