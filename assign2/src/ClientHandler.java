@@ -141,11 +141,11 @@ public class ClientHandler implements Runnable{
 
                 if(player.getToken().equals(token)) {
                     //player already logged in
-                    if(queue.contains(player) ||
+                    /*if(queue.contains(player) ||
                             queueDiv1.contains(player) ||
                             queueDiv2.contains(player) ||
                             queueDiv3.contains(player))
-                        break;
+                        break;*/
                     //token expired
                     if(player.getTokenLimit() < Instant.now().getEpochSecond()){
                         System.out.println("Token Limit");
@@ -170,25 +170,34 @@ public class ClientHandler implements Runnable{
         outputStream.println("AUTHFAIL");
 
         //require Login
+
         outputStream.println("LOGIN");
+
         //read username
         String username = askClientInput();
+
+
         System.out.println(username);
         if(username == null){
             return;
         }
         //read password
+
         String password = askClientInput();
         System.out.println(password);
 
         //verify credentials
         for(Player player : players) {
             //player already logged in
-            if(queue.contains(player) ||
+            /*if(queue.contains(player) ||
                     queueDiv1.contains(player) ||
                     queueDiv2.contains(player) ||
-                    queueDiv3.contains(player))
+                    queueDiv3.contains(player)){
+                System.out.println("[LOGINFAILED] " + player.getUsername() + " AlreadyLoggedIn");
                 break;
+
+            }*/
+
             //Check username
             if(username.equals(player.getUsername())){
                 //Check password
