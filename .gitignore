@@ -2,4 +2,7 @@ matrixproduct
 MatrixProduct.class
 *.csv
 *.zip
+*.iml
 settings.json
+assign2/out
+.idea
