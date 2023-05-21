@@ -56,7 +56,7 @@ public class ThreadPooledServer implements Runnable{
         threadPool = Executors.newFixedThreadPool(MAX_QUEUE_PLAYERS);
         gamePool = Executors.newFixedThreadPool(MAX_GAMES);
 
-        loadPlayers("assign2/src/players");
+        loadPlayers("players");
         /*for( Player player : players) {
             player.printPlayer();
         }*/

@@ -109,6 +109,7 @@ public class Client {
                     }
                 }
                 else {
+
                     System.out.println(received);
                 }
             }
@@ -143,13 +144,13 @@ public class Client {
         else{
             System.out.println("Login Failed!");
         }
-        System.out.println(serverMessage());
+        //System.out.println(serverMessage());
 
         System.out.println();
     }
 
     public void loadToken() {
-        String filePath = "assign2/src/token.txt";
+        String filePath = "token.txt";
         File file = new File(filePath);
 
         if (!file.exists()) {
@@ -177,7 +178,7 @@ public class Client {
     }
 
     public void saveToken() {
-        String filePath = "assign2/src/token.txt";
+        String filePath = "token.txt";
         File file = new File(filePath);
 
         try {

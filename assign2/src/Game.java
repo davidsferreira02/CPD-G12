@@ -29,7 +29,7 @@ public class Game {
 
         //Game Variables
         this.state = "MENU";
-        this.questionsPath = "assign2/src/questions.txt";
+        this.questionsPath = "questions.txt";
         this.questions = new ArrayList<>();
         this.gamequestions = new ArrayList<>();
 

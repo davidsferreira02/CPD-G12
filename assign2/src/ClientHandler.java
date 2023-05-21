@@ -35,7 +35,7 @@ public class ClientHandler implements Runnable{
     private ReentrantLock lock;
 
     private int queueType;
-
+    private boolean queueMessageFirst = true;
     public ClientHandler(Socket clientSocket, ArrayList<Player> queue, ArrayList<Player> queueDiv1, ArrayList<Player> queueDiv2, ArrayList<Player> queueDiv3, ArrayList<Player> players, ReentrantLock lock, int queueType) {
         this.clientSocket = clientSocket;
         this.queue   = queue;
@@ -60,17 +60,20 @@ public class ClientHandler implements Runnable{
             String receivedMessage;
 
             while(!isStopped){
-                lock.lock();
+
                 clientSocket.setSoTimeout(0);
                 if(!isLoggedIn) {
                     System.out.println("Asking login: " + clientSocket);
                     login();
                 }
                 else if(player.getStatus().equals("QUEUE")) {
-                    if(nextTime == Instant.now().getEpochSecond()){
+                    if(nextTime == Instant.now().getEpochSecond() || queueMessageFirst){
                         outputStream.println("In queue...");
                         nextTime = Instant.now().plusSeconds(5).getEpochSecond();
+                        queueMessageFirst = false;
                     }
+                    //outputStream.println("QUEUE???");
+                    //System.out.println("QUEUE PLAYER + " + player.getUsername());
                 }
                 else if(player.getStatus().equals("CHECKALIVE")){
                     outputStream.println("CHECKALIVE");
@@ -92,10 +95,12 @@ public class ClientHandler implements Runnable{
 
                 }
                 else if(player.getStatus().equals("ADDQUEUE")) {
+                    lock.lock();
                     addToQueue(player);
+                    lock.unlock();
                     player.setStatusQueue();
+                    queueMessageFirst = true;
                 }
-                lock.unlock();
             }
 
 
@@ -131,9 +136,21 @@ public class ClientHandler implements Runnable{
         outputStream.println("AUTH");
         String token = askClientInput();
         //if token = 0 or does not exist
-        if(!token.equals("0")) {
+        if(token != null && !token.equals("0")) {
             for(Player player : players) {
+
                 if(player.getToken().equals(token)) {
+                    //player already logged in
+                    if(queue.contains(player) ||
+                            queueDiv1.contains(player) ||
+                            queueDiv2.contains(player) ||
+                            queueDiv3.contains(player))
+                        break;
+                    //token expired
+                    if(player.getTokenLimit() < Instant.now().getEpochSecond()){
+                        System.out.println("Token Limit");
+                        break;
+                    }
                     this.player = player;
                     validToken = true;
                     isLoggedIn = true;
@@ -166,6 +183,12 @@ public class ClientHandler implements Runnable{
 
         //verify credentials
         for(Player player : players) {
+            //player already logged in
+            if(queue.contains(player) ||
+                    queueDiv1.contains(player) ||
+                    queueDiv2.contains(player) ||
+                    queueDiv3.contains(player))
+                break;
             //Check username
             if(username.equals(player.getUsername())){
                 //Check password
@@ -274,6 +297,6 @@ public class ClientHandler implements Runnable{
     }
 
     public synchronized void updatePlayerFile() {
-        player.updateUserFile("assign2/src/players/");
+        player.updateUserFile("players/");
     }
 }
