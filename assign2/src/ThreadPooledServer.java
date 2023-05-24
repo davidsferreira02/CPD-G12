@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
@@ -276,7 +277,6 @@ public class ThreadPooledServer implements Runnable{
                 .anyMatch(player -> player.getTime() > thresholdTime);
 
         if (hasPlayerWithThresholdTime && mergeQueue.size() >= MAX_PLAYERS) {
-
             Player selectedPlayer = null;
 
             // Finding the player with the longest waiting time
@@ -289,7 +289,7 @@ public class ThreadPooledServer implements Runnable{
             // Finding players with ranks near the selected player
 
             int selectedPlayerIndex = mergeQueue.indexOf(selectedPlayer);
-            int rank = selectedPlayer.getRank();
+            int rank = selectedPlayer.getDivision();
             int count = 0;
             int i = 0;
 
@@ -297,7 +297,7 @@ public class ThreadPooledServer implements Runnable{
             // Find nearby players with the same rank, rank difference of 1, and rank difference of 2
             while (count < maxNearbyPlayers && i < mergeQueue.size()) {
                 Player player = mergeQueue.get(i);
-                int playerRank = player.getRank();
+                int playerRank = player.getDivision();
                 if (abs(playerRank - rank) == rankDiff && !player.equals(selectedPlayer) && !queue.contains(player)) {
                     queue.add(player);
                     removePlayerFromQueueDivision(player);
@@ -309,6 +309,10 @@ public class ThreadPooledServer implements Runnable{
                     rankDiff++;
                 }
             }
+            queue.add(selectedPlayer);
+            removePlayerFromQueueDivision(selectedPlayer);
+
+
 
         } else {
 //            System.out.println("No player with time greater than " + thresholdTime + " found.");
@@ -347,7 +351,7 @@ public class ThreadPooledServer implements Runnable{
     public void mergeQueues() {
         mergeQueue.addAll(queueDiv3);
         mergeQueue.addAll(queueDiv2);
-        mergeQueue.addAll(queueDiv3);
+        mergeQueue.addAll(queueDiv1);
     }
 
     public void printQueueServerLogs(){
